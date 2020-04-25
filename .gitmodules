@@ -1,3 +1,4 @@
 [submodule "buildSrc"]
 	path = buildSrc
 	url = git@github.com:jdiazcano/buildSrc.git
+	branch = master
