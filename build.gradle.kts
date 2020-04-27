@@ -43,25 +43,21 @@ kotlin {
         }
     }
 
-    val windows = mingwX64("windows") {
-        binaries {
-            executable("laguna") {
-                entryPoint = "${project.ext["mainPackage"]}.main"
-            }
-        }
-
-        compilations["main"].cinterops {
-            val libgit2 by creating {
-                packageName = "libgit2"
-                defFile(project.file("common-native/nativeInterop/libgit2.def"))
-                when (preset) {
-                    presets["macosX64"] -> includeDirs.headerFilterOnly("/opt/local/include", "/usr/local/include")
-                    presets["linuxX64"] -> includeDirs.headerFilterOnly("/usr/include")
-                    presets["mingwX64"] -> includeDirs.headerFilterOnly(mingwPath.resolve("include"))
-                }
-            }
-        }
-    }
+//    val windows = mingwX64("windows") {
+//        binaries {
+//            executable("laguna") {
+//                entryPoint = "${project.ext["mainPackage"]}.main"
+//            }
+//        }
+//
+//        compilations["main"].cinterops {
+//            val libgit2 by creating {
+//                packageName = "libgit2"
+//                defFile(project.file("common-native/nativeInterop/libgit2.def"))
+//                includeDirs.headerFilterOnly(mingwPath.resolve("include"))
+//            }
+//        }
+//    }
 
     sourceSets {
         val commonMain by getting {
@@ -97,7 +93,7 @@ kotlin {
 
         val nativeTest by creating {
             kotlin.srcDir("common-native/tst")
-            dependsOn(native)
+            dependsOn(commonTest)
             dependencies {
             }
         }
@@ -112,15 +108,15 @@ kotlin {
             dependsOn(linuxMain)
         }
 
-        val windowsMain by getting {
-            kotlin.srcDirs("windows/src")
-            dependsOn(native)
-        }
-
-        val windowsTest by getting {
-            kotlin.srcDirs("windows/tst")
-            dependsOn(windowsMain)
-        }
+//        val windowsMain by getting {
+//            kotlin.srcDirs("windows/src")
+//            dependsOn(native)
+//        }
+//
+//        val windowsTest by getting {
+//            kotlin.srcDirs("windows/tst")
+//            dependsOn(windowsMain)
+//        }
 //
 //        val macosMain by getting {
 //            kotlin.srcDir("macos")

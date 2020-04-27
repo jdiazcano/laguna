@@ -3,7 +3,7 @@ package com.jdiazcano.laguna.git
 import kotlinx.cinterop.*
 import libgit2.*
 
-actual object Git {
+actual object NativeGit {
     actual fun clone(url: String, path: String) {
         memScoped {
             val loc = allocPointerTo<git_repository>()
