@@ -1,3 +1,5 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 plugins {
     kotlin("multiplatform") version "1.3.70"
     kotlin("plugin.serialization") version "1.3.70"
@@ -12,8 +14,14 @@ project.ext["mainPackage"] = "com.jdiazcano.laguna"
 
 val mingwPath = File(System.getenv("MINGW64_DIR") ?: "C:/msys64/mingw64")
 
+val currentOs = when {
+    Os.isFamily(Os.FAMILY_MAC) -> "macos"
+    Os.isFamily(Os.FAMILY_UNIX) -> "linux"
+    Os.isFamily(Os.FAMILY_WINDOWS) -> "windows"
+    else -> TODO()
+}
+
 kotlin {
-//    val macos = macosX64("macos")
     val jvm = jvm {
         withJava()
         val jvmJar by tasks.getting(org.gradle.jvm.tasks.Jar::class) {
@@ -36,9 +44,24 @@ kotlin {
         compilations["main"].cinterops {
             val libgit2 by creating {
                 packageName = "libgit2"
-                println(project.file("common-native/nativeInterop/libgit2.def").absolutePath)
                 defFile(project.file("common-native/nativeInterop/libgit2.def"))
                 includeDirs.headerFilterOnly("/usr/include")
+            }
+        }
+    }
+
+    val macos = macosX64("macos") {
+        binaries {
+            executable("laguna") {
+                entryPoint = "${project.ext["mainPackage"]}.main"
+            }
+        }
+
+        compilations["main"].cinterops {
+            val libgit2 by creating {
+                packageName = "libgit2"
+                defFile(project.file("common-native/nativeInterop/libgit2.def"))
+                includeDirs.headerFilterOnly("/opt/local/include", "/usr/local/include")
             }
         }
     }
@@ -117,10 +140,15 @@ kotlin {
 //            dependsOn(windowsMain)
 //        }
 //
-//        val macosMain by getting {
-//            kotlin.srcDir("macos")
-//            dependsOn(native)
-//        }
+        val macosMain by getting {
+            kotlin.srcDir("macos/src")
+            dependsOn(native)
+        }
+
+        val macosTest by getting {
+            kotlin.srcDirs("macos/tst")
+            dependsOn(nativeTest)
+        }
 
         val jvmMain by getting {
             kotlin.srcDir("jvm/src")
@@ -139,4 +167,9 @@ kotlin {
             }
         }
     }
+}
+
+val releaseCurrent by tasks.registering {
+    dependsOn("linkLagunaDebugExecutable${currentOs.capitalize()}")
+    dependsOn("linkLagunaReleaseExecutable${currentOs.capitalize()}")
 }

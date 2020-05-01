@@ -22,10 +22,11 @@ class Laguna: CliktCommand() {
         echo(projectName)
         echo(templateArguments)
 
-        val repository = GitRepository("laguna-templates")
+        val repository = GitRepository("/tmp/laguna-templates")
         when (projectName) {
             "clone" -> {
                 println("Cloning: ${repository.clone("https://github.com/jdiazcano/laguna-templates.git")}")
+                println("Closing: ${repository.close()}")
             }
             "reset" -> {
                 repository.use {
