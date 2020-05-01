@@ -74,7 +74,6 @@ kotlin {
 
         val commonTest by getting {
             kotlin.srcDir("common/tst")
-            dependsOn(commonMain)
             dependencies {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
@@ -105,7 +104,7 @@ kotlin {
 
         val linuxTest by getting {
             kotlin.srcDirs("linux/tst")
-            dependsOn(linuxMain)
+            dependsOn(nativeTest)
         }
 
 //        val windowsMain by getting {
@@ -135,7 +134,7 @@ kotlin {
 
         val jvmTest by getting {
             kotlin.srcDir("jvm/tst")
-            dependsOn(jvmMain)
+            dependsOn(commonTest)
             dependencies {
             }
         }
