@@ -5,10 +5,7 @@ plugins {
     kotlin("plugin.serialization") version "1.3.70"
 }
 
-repositories {
-    mavenCentral()
-    jcenter()
-}
+apply(from = Gradles.repositories)
 
 project.ext["mainPackage"] = "com.jdiazcano.laguna"
 
@@ -89,9 +86,9 @@ kotlin {
                 implementation(kotlin("stdlib-common", "1.3.70"))
 
                 implementation(Libraries.cliktMultiplatform)
-                implementation(Libraries.ktor.client.core)
-                implementation(Libraries.ktor.client.json)
-                implementation(Libraries.ktor.client.kotlinxSerialization)
+//                implementation(Libraries.ktor.client.core)
+//                implementation(Libraries.ktor.client.json)
+//                implementation(Libraries.ktor.client.kotlinxSerialization)
             }
         }
 

@@ -2,10 +2,10 @@ package com.jdiazcano.laguna.git
 
 import cnames.structs.git_repository
 import com.jdiazcano.laguna.Laguna
+import com.jdiazcano.laguna.files.File
 import io.ktor.utils.io.core.Closeable
 import kotlinx.cinterop.*
 import libgit2.*
-import platform.linux.tostruct
 import platform.posix.free
 import platform.posix.remove
 
@@ -13,23 +13,12 @@ fun main(args: Array<String>) {
     Laguna().main(args)
 }
 
-actual class GitRepository actual constructor(val path: String): Closeable {
+actual class GitRepository actual constructor(val file: File): Closeable {
     private lateinit var repository: CPointerVar<git_repository>
 
     actual fun open() {
         repository = nativeHeap.allocPointerTo()
-        git_repository_open(repository.ptr, path).throwGitErrorIfNeeded()
-    }
-
-    actual fun clone(url: String): Int {
-        memScoped {
-            val loc = allocPointerTo<git_repository>()
-            val exit = git_clone(loc.ptr, url, path, null).ifError {
-                throw GitException(giterr_last()!!.pointed.message!!.toKString())
-            }
-            git_repository_free(loc.value!!)
-            return exit
-        }
+        git_repository_open(repository.ptr, file.path).throwGitErrorIfNeeded()
     }
 
     actual fun pull(): Int {
@@ -67,7 +56,7 @@ actual class GitRepository actual constructor(val path: String): Closeable {
             git_reset(repository.value!!, head.value!!, mode).throwGitErrorIfNeeded()
 
             val repo = this@GitRepository
-            val pointer = repo.path.cstr
+            val pointer = repo.file.path.cstr
             val callback = allocPointerTo<GitStatusCBFunction>()
             callback.value = removeUntracked()
 
@@ -134,3 +123,14 @@ fun git_reset(repo: CValuesRef<git_repository>, target: CValuesRef<git_object>, 
 
 typealias GitStatusCBFunction = CFunction<(CPointer<ByteVar>?, UInt, COpaquePointer?) -> Int>
 typealias AddAllFunction = CFunction<(CPointer<ByteVar>?, CPointer<ByteVar>?, COpaquePointer?) -> Int>
+
+actual object Git {
+    actual fun clone(url: String, file: File): GitRepository {
+        memScoped {
+            val loc = allocPointerTo<git_repository>()
+            git_clone(loc.ptr, url, file.path, null).throwGitErrorIfNeeded()
+            git_repository_free(loc.value)
+            return GitRepository(file)
+        }
+    }
+}

@@ -1,15 +1,15 @@
 package com.jdiazcano.laguna.git
 
-import io.ktor.client.engine.HttpClientEngineConfig
-import io.ktor.client.engine.HttpClientEngineFactory
+import com.jdiazcano.laguna.files.File
 import io.ktor.utils.io.core.Closeable
 
-//expect fun createHttpClientEngine(): HttpClientEngineFactory<HttpClientEngineConfig>
+expect object Git {
+    fun clone(url: String, file: File): GitRepository
+}
 
-expect class GitRepository(path: String): Closeable {
+expect class GitRepository(file: File): Closeable {
     fun open()
     override fun close()
-    fun clone(url: String): Int
     fun pull(): Int
     fun fetch(): Int
     fun reset(mode: GitResetMode): Int

@@ -1,13 +1,10 @@
 package com.jdiazcano.laguna.git
 
+import com.jdiazcano.laguna.files.File
 import java.io.Closeable
 
-actual class GitRepository actual constructor(val path: String): Closeable {
+actual class GitRepository actual constructor(file: File): Closeable {
     actual fun open() {
-    }
-
-    actual fun clone(url: String): Int {
-        TODO("Not yet implemented")
     }
 
     actual fun pull(): Int {
@@ -34,4 +31,10 @@ actual class GitRepository actual constructor(val path: String): Closeable {
         TODO("Not yet implemented")
     }
 
+}
+
+actual object Git {
+    actual fun clone(url: String, file: File): GitRepository {
+        TODO("Not yet implemented")
+    }
 }

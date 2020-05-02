@@ -6,6 +6,8 @@ import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.arguments.transformAll
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
+import com.jdiazcano.laguna.files.File
+import com.jdiazcano.laguna.git.Git
 import com.jdiazcano.laguna.git.GitRepository
 import com.jdiazcano.laguna.git.GitResetMode
 import io.ktor.utils.io.core.use
@@ -21,31 +23,5 @@ class Laguna: CliktCommand() {
         echo(templateName)
         echo(projectName)
         echo(templateArguments)
-
-        val repository = GitRepository("/tmp/laguna-templates")
-        when (projectName) {
-            "clone" -> {
-                println("Cloning: ${repository.clone("https://github.com/jdiazcano/laguna-templates.git")}")
-                println("Closing: ${repository.close()}")
-            }
-            "reset" -> {
-                repository.use {
-                    println("Opening: ${repository.open()}")
-                    println("Resetting: ${repository.reset(GitResetMode.HARD)}")
-                    println("Checking out: ${repository.checkout("HEAD")}")
-//                    println("Closing: ${repository.close()}")
-                }
-            }
-            "add" -> {
-                val folders = templateArguments.values.toTypedArray()
-                println(folders.toList())
-                repository.use {
-                    println("Opening: ${repository.open()}")
-                    println("Adding: ${repository.add(folders)}")
-//                    println("Closing: ${repository.close()}")
-                }
-            }
-            else -> TODO()
-        }
     }
 }
