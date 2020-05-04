@@ -1,15 +1,15 @@
 package com.jdiazcano.laguna.git
 
 import com.jdiazcano.laguna.files.File
-import io.ktor.utils.io.core.Closeable
 
 expect object Git {
     fun clone(url: String, file: File): GitRepository
 }
 
-expect class GitRepository(file: File): Closeable {
+expect class GitRepository(file: File) {
     fun open()
-    override fun close()
+    fun clean()
+    fun close()
     fun pull(): Int
     fun fetch(): Int
     fun reset(mode: GitResetMode): Int

@@ -6,11 +6,6 @@ import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.arguments.transformAll
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
-import com.jdiazcano.laguna.files.File
-import com.jdiazcano.laguna.git.Git
-import com.jdiazcano.laguna.git.GitRepository
-import com.jdiazcano.laguna.git.GitResetMode
-import io.ktor.utils.io.core.use
 
 class Laguna: CliktCommand() {
     val templateName: String by argument()

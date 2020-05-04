@@ -83,6 +83,9 @@ actual class GitRepository actual constructor(val file: File): Closeable {
         git_repository_free(repository.value)
         nativeHeap.free(repository)
     }
+
+    actual fun clean() {
+    }
 }
 
 private fun Int.throwGitErrorIfNeeded(): Int {

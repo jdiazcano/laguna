@@ -31,6 +31,9 @@ actual class GitRepository actual constructor(file: File): Closeable {
         TODO("Not yet implemented")
     }
 
+    actual fun clean() {
+    }
+
 }
 
 actual object Git {
