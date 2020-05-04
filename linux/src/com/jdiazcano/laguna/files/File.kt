@@ -28,4 +28,19 @@ actual class File actual constructor(
     actual fun remove(mode: RemoveMode): Boolean {
         TODO("Not yet implemented")
     }
+
+    actual fun read(): String {
+        TODO("Not yet implemented")
+    }
+
+    actual fun listFiles(): List<File> {
+        TODO("Not yet implemented")
+    }
+
+    actual fun exists(): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    actual fun write(string: String) {
+    }
 }

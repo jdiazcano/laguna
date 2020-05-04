@@ -4,7 +4,6 @@ import cnames.structs.git_repository
 import com.jdiazcano.laguna.Laguna
 import com.jdiazcano.laguna.files.File
 import com.jdiazcano.laguna.files.allocValuePointedTo
-import io.ktor.utils.io.core.Closeable
 import kotlinx.cinterop.*
 import libgit2.*
 
@@ -27,7 +26,7 @@ actual object Git {
     }
 }
 
-actual class GitRepository actual constructor(private val file: File): Closeable {
+actual class GitRepository actual constructor(private val file: File) {
     private lateinit var repository: CPointerVar<git_repository>
 
     init {
@@ -112,7 +111,7 @@ actual class GitRepository actual constructor(private val file: File): Closeable
         }
     }
 
-    actual override fun close() {
+    actual fun close() {
         git_repository_free(repository.value)
         nativeHeap.free(repository)
         git_libgit2_shutdown()

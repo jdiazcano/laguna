@@ -38,6 +38,73 @@ actual class File actual constructor(
 
         return exitCode == 0
     }
+
+    actual fun exists(): Boolean {
+        //TODO
+        return true
+    }
+
+    actual fun listFiles(): List<File> {
+        if (!exists()) {
+            throw IllegalArgumentException("'$path' does not exist.")
+        }
+
+        if (!isDirectory()) {
+            throw IllegalArgumentException("'$path' is not a directory.")
+        }
+
+        val files = arrayListOf<File>()
+        val dir = opendir(path)
+        if (dir?.pointed != null) {
+            var pathPointer = readdir(dir)
+            while (pathPointer?.pointed != null) {
+                val pathString = pathPointer.pointed.d_name.toKString()
+                if (pathString != "." && pathString != "..") {
+                    files.add(File(pathString))
+                }
+                pathPointer = readdir(dir)
+            }
+        } else {
+            throw IllegalArgumentException("Could not open '$path'")
+        }
+
+        return files
+    }
+
+    actual fun read(): String {
+        val file = fopen(path, "r") ?: throw IllegalStateException("cannot open input file $path")
+
+        return buildString {
+            file.use {
+                memScoped {
+                    val bufferLength = 64 * 1024
+                    val buffer = allocArray<ByteVar>(bufferLength)
+
+                    while (true) {
+                        val nextLine = fgets(buffer, bufferLength, file)?.toKString() ?: break
+
+                        append(nextLine)
+                    }
+                }
+            }
+        }
+    }
+
+    actual fun write(string: String) {
+        val file = fopen(path, "w") ?: throw IllegalStateException("Can't write into '$path'")
+
+        file.use {
+            fputs(string, file)
+        }
+    }
+}
+
+fun CPointer<FILE>.use(block: () -> Unit) {
+    try {
+        block()
+    } finally {
+        fclose(this)
+    }
 }
 
 inline fun <reified T : CPointed> NativePlacement.allocValuePointedTo(obj: () -> CPointer<T>): CPointerVar<T> {

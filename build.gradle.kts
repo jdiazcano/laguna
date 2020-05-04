@@ -85,10 +85,9 @@ kotlin {
             dependencies {
                 implementation(kotlin("stdlib-common", "1.3.70"))
 
+                implementation(Libraries.jetbrains.kotlin.coroutinesCommon)
                 implementation(Libraries.cliktMultiplatform)
-//                implementation(Libraries.ktor.client.core)
-//                implementation(Libraries.ktor.client.json)
-//                implementation(Libraries.ktor.client.kotlinxSerialization)
+                implementation(Libraries.korlibs.korte)
             }
         }
 
@@ -104,9 +103,7 @@ kotlin {
             kotlin.srcDir("common-native/src")
             dependsOn(commonMain)
             dependencies {
-                implementation(Libraries.ktor.client.coreNative)
-                implementation(Libraries.ktor.client.curl)
-                implementation(Libraries.ktor.client.kotlinxSerializationNative)
+                implementation(Libraries.jetbrains.kotlin.coroutinesNative)
             }
         }
 
