@@ -1,42 +1,30 @@
-# Base kotlin project
-This project is the base for any Kotlin project. It contains a series of utilities that let you kick off your project
-easily with for example custom publishing to s3, easy fatjar... and so on.
+## Laguna
+Agnostic and pluggable project generator for all kind of projects with a centralized repository. 100% written in Kotlin
+Multiplatform with support for Mac (Linux/JVM incoming)
 
-You just need to create a new project with this template and then add the `buildSrc` submodule:
+Features:
 
-```
-git submodule add -b master git@github.com:jdiazcano/buildSrc.git --init
-```
+1. Variable substitution
+1. Centralized repository (updated content!)
+1. Custom repositories/folders
 
-Then change the name in the file `settings.gradle` and the project will be ready for writing code!
-
-## Code structure
-This project has a different code structure for source/test files and resources. It removes all the useless `main` folders
-and now it'll be like
+## Usage
+`laguna "template-name" --name projectname [--output /tmp][ -- variable1=value1 variable2=value2]`
 
 ```
-project
- |
- |-> src (Base source folder)
- |-> res (Resource folder)
- |-> tst (Base test folder)
- \-> tstres (Test resources)
+Usage: laguna [OPTIONS] TEMPLATENAME [TEMPLATEARGUMENTS]...
+
+Options:
+  -n, --name TEXT
+  -o, --output TEXT
+  -h, --help         Show this message and exit
 ```
 
-## Helpers
-Now you can add a `baseProject()` method into your `build.gradle.kts` and it will add all the normal dependencies that
-a project can have.
+It will create a new folder in the output folder (current folder by default) with the directory tree of the template and
+rendered files with variable substitution.
 
-But that's not the only way, you can customize the gradle files that the project is importing (applying)! For example:
+## Build from source
+1. Checkout this project
+1. Run `./gradlew releaseCurrent` (Needs Java!)
 
-```kotlin
-apply(from = Gradles.fatjar)
-```
-
-And then you will have a fatjar in your project!, same for the rest. For now, the ones that are supported are:
-
-1. fatjar: Will add the fatjar task in your project
-1. javaeight: Will have source compatibility to Java 8
-1. publications: Will add the packaging for publishing (you still need to add the `maven-publish` plugin)
-1. repositories: Adds basic repositories to the project
-1. sourcesets: Now the project sources are going to be like above (src, res, tst, tstres)
+### Building troubleshoot

@@ -1,20 +1,42 @@
 package com.jdiazcano.laguna.git
 
 import cnames.structs.git_repository
-import com.jdiazcano.laguna.Laguna
 import com.jdiazcano.laguna.files.File
-import io.ktor.utils.io.core.Closeable
 import kotlinx.cinterop.*
 import libgit2.*
-import platform.posix.free
-import platform.posix.remove
 
-fun main(args: Array<String>) {
-    Laguna().main(args)
+actual object Git {
+    init {
+        git_libgit2_init()
+    }
+
+    actual fun clone(url: String, file: File): GitRepository {
+        memScoped {
+            val loc = allocPointerTo<git_repository>()
+            git_clone(loc.ptr, url, file.path, null).throwGitErrorIfNeeded()
+            git_repository_free(loc.value)
+            return GitRepository(file)
+        }
+    }
 }
 
-actual class GitRepository actual constructor(val file: File): Closeable {
+actual class GitRepository actual constructor(private val file: File) {
     private lateinit var repository: CPointerVar<git_repository>
+
+    init {
+        git_libgit2_init()
+        printVersion()
+    }
+
+    private fun printVersion() {
+        memScoped {
+            val major = alloc<IntVar>()
+            val minor = alloc<IntVar>()
+            val rev = alloc<IntVar>()
+            git_libgit2_version(major.ptr, minor.ptr, rev.ptr)
+            println("Major: ${major.value}, minor: ${minor.value}, rev: ${rev.value}")
+        }
+    }
 
     actual fun open() {
         repository = nativeHeap.allocPointerTo()
@@ -22,69 +44,89 @@ actual class GitRepository actual constructor(val file: File): Closeable {
     }
 
     actual fun pull(): Int {
-        TODO("Not yet implemented")
-    }
+        fetch()
+        return memScoped {
+            val newTarget = allocPointerTo<git_reference>()
+            val targetReference = allocPointerTo<git_reference>()
+            git_repository_head(targetReference.ptr, repository.value).throwGitErrorIfNeeded()
 
-    actual fun fetch(): Int {
-        TODO("Not yet implemented")
-    }
-
-    actual fun add(paths: Array<String>): Int {
-        memScoped {
-            val repoIndex = allocPointerTo<git_index>()
-            git_repository_index(repoIndex.ptr, repository.value).throwGitErrorIfNeeded()
-            println(repoIndex.ptr.toLong())
-            println(repoIndex.ptr.toLong().toCPointer<git_index>())
-            val files = cValue<git_strarray> {
-                count = paths.size.toULong()
-                strings = paths.toCStringArray(memScope)
+            val treeish = allocPointerTo<git_object>()
+            val options = cValue<git_checkout_options> {
+                version = GIT_CHECKOUT_OPTIONS_VERSION.toUInt()
+                checkout_strategy = GIT_CHECKOUT_SAFE
             }
+            git_revparse_single(treeish.ptr, repository.value, "origin/master").throwGitErrorIfNeeded()
+            git_checkout_tree(repository.value, treeish.value, options).throwGitErrorIfNeeded()
+            val exit = git_reference_set_target(newTarget.ptr, targetReference.value, git_object_id(treeish.value), null).throwGitErrorIfNeeded()
 
-            val callback = allocPointerTo<AddAllFunction>()
-            callback.value = printer()
+            git_reference_free(newTarget.value)
+            git_reference_free(targetReference.value)
+            git_object_free(treeish.value)
 
-            val exit = git_index_add_all(repoIndex.value, files, GIT_INDEX_ADD_FORCE, callback.value, null).throwGitErrorIfNeeded()
-            git_index_free(repoIndex.value)
-            return exit
+            exit
         }
     }
 
+    actual fun fetch(): Int {
+        return memScoped {
+            val remote = allocPointerTo<git_remote>()
+            git_remote_lookup(remote.ptr, repository.value, "origin").throwGitErrorIfNeeded()
+            val exit = git_remote_fetch(remote.value, null, null, null).throwGitErrorIfNeeded()
+            git_remote_free(remote.value)
+            exit
+        }
+    }
+
+    actual fun add(paths: Array<String>): Int {
+        TODO()
+    }
+
     actual fun reset(mode: GitResetMode): Int {
-        memScoped {
+        return memScoped {
             val head = allocPointerTo<git_object>()
             git_revparse_single(head.ptr, repository.value!!, "HEAD")
-            git_reset(repository.value!!, head.value!!, mode).throwGitErrorIfNeeded()
-
-            val repo = this@GitRepository
-            val pointer = repo.file.path.cstr
-            val callback = allocPointerTo<GitStatusCBFunction>()
-            callback.value = removeUntracked()
-
-            val exit =  git_status_foreach(repository.value!!, callback.value, pointer)
-            free(callback.value)
-
-            return 0
+            git_reset(repository.value!!, head.value!!, mode.index, null).throwGitErrorIfNeeded()
         }
     }
 
     actual fun checkout(identifier: String): Int {
-        return if (identifier == "HEAD") {
-            val opts = cValue<git_checkout_opts> {
-                version = GIT_CHECKOUT_OPTS_VERSION.toUInt()
-                checkout_strategy = GIT_CHECKOUT_FORCE
+        return memScoped {
+            val treeish = allocPointerTo<git_object>()
+            val options = cValue<git_checkout_options> {
+                version = GIT_CHECKOUT_OPTIONS_VERSION.toUInt()
+                checkout_strategy = GIT_CHECKOUT_SAFE
             }
-            git_checkout_head(repository.value!!, opts).throwGitErrorIfNeeded()
-        } else {
-            TODO()
+            git_revparse_single(treeish.ptr, repository.value, identifier).throwGitErrorIfNeeded()
+            git_checkout_tree(repository.value, treeish.value, options).throwGitErrorIfNeeded()
+
+            val exit = git_repository_set_head(repository.value, "refs/heads/$identifier").throwGitErrorIfNeeded()
+            git_object_free(treeish.value)
+            exit
         }
     }
 
-    actual override fun close() {
+    actual fun close() {
         git_repository_free(repository.value)
         nativeHeap.free(repository)
+        git_libgit2_shutdown()
     }
 
     actual fun clean() {
+        reset(GitResetMode.HARD)
+
+        return memScoped {
+            val payload = StableRef.create(file)
+            val payloadPtr = payload.asCPointer()
+            val removeUnindexed = allocValuePointedTo {
+                staticCFunction { path: CPointer<ByteVar>?, _: UInt, payload: COpaquePointer? ->
+                    val payloadFile = payload!!.asStableRef<File>().get()
+                    payloadFile.resolve(path!!.toKString()).remove()
+                    0
+                }
+            }
+            git_status_foreach(repository.value, removeUnindexed.value, payloadPtr).throwGitErrorIfNeeded()
+            payload.dispose()
+        }
     }
 }
 
@@ -96,44 +138,8 @@ private fun Int.throwGitErrorIfNeeded(): Int {
     return this
 }
 
-private fun removeUntracked(): CPointer<CFunction<(CPointer<ByteVar>?, UInt, COpaquePointer?) -> Int>> {
-    return staticCFunction { statusPath: CPointer<ByteVar>?, flags: UInt, payload: COpaquePointer? ->
-        val path = statusPath!!.toKString()
-        println("Maybe removing: $path")
-        val removing = flags and GIT_STATUS_INDEX_NEW == 1U
-        println("Removing? $removing")
-        if (removing) {
-            val castedPayload = payload!!.reinterpret<ByteVar>()
-            remove(castedPayload.toKString() + path)
-//            println(payload.rawValue.toLong())
-//            println("Casted payload!: $castedPayload")
-//            git_index_remove_bypath(castedPayload, statusPath!!.toKString())
-        }
-        0
-    }
-}
-
-private fun printer(): CPointer<CFunction<(CPointer<ByteVar>?, CPointer<ByteVar>?, COpaquePointer?) -> Int>> {
-    return staticCFunction { statusPath: CPointer<ByteVar>?, _: CPointer<ByteVar>?, payload: COpaquePointer? ->
-        println("Adding: ${statusPath?.toKString()}")
-        0
-    }
-}
-
-fun git_reset(repo: CValuesRef<git_repository>, target: CValuesRef<git_object>, resetMode: GitResetMode): Int {
-    return git_reset(repo, target, resetMode.index)
-}
-
-typealias GitStatusCBFunction = CFunction<(CPointer<ByteVar>?, UInt, COpaquePointer?) -> Int>
-typealias AddAllFunction = CFunction<(CPointer<ByteVar>?, CPointer<ByteVar>?, COpaquePointer?) -> Int>
-
-actual object Git {
-    actual fun clone(url: String, file: File): GitRepository {
-        memScoped {
-            val loc = allocPointerTo<git_repository>()
-            git_clone(loc.ptr, url, file.path, null).throwGitErrorIfNeeded()
-            git_repository_free(loc.value)
-            return GitRepository(file)
-        }
-    }
+inline fun <reified T : CPointed> NativePlacement.allocValuePointedTo(obj: () -> CPointer<T>): CPointerVar<T> {
+    val pointer = allocPointerTo<T>()
+    pointer.value = obj()
+    return pointer
 }
