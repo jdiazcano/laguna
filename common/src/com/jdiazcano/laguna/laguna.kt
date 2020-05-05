@@ -32,7 +32,8 @@ class Laguna: CliktCommand() {
             forEachFileRecursive(templateFolder) {
                 // The file is relative to the repository folder
                 val relativeFile = it.path.replace(templateFolder.path, "")
-                outputFolder.resolve(relativeFile).write(renderer.render(it.path, templateArguments))
+                val renderedTemplate = renderer.render(it.path, templateArguments)
+                outputFolder.resolve(relativeFile).write(renderedTemplate)
             }
         }
     }

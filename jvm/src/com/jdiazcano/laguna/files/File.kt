@@ -41,4 +41,9 @@ actual class File actual constructor(path: String) {
     actual fun write(string: String) {
     }
 
+    actual companion object {
+        actual val pathSeparator: String
+            get() = TODO("Not yet implemented")
+    }
+
 }

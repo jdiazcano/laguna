@@ -46,4 +46,9 @@ actual class File actual constructor(
 
     actual val absolutePath: String
         get() = TODO("Not yet implemented")
+
+    actual companion object {
+        actual val pathSeparator: String
+            get() = TODO("Not yet implemented")
+    }
 }

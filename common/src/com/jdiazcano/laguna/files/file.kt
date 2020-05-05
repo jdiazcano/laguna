@@ -1,6 +1,10 @@
 package com.jdiazcano.laguna.files
 
 expect class File(path: String) {
+    companion object {
+        val pathSeparator: String
+    }
+
     val path: String
     val absolutePath: String
 

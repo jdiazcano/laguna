@@ -6,19 +6,25 @@ import platform.posix.*
 actual class File actual constructor(
     actual val path: String
 ) {
+    actual companion object {
+        actual val pathSeparator = "/"
+    }
+
     actual val absolutePath by lazy {
         memScoped {
-            val realpath = realpath(path, null)
-            realpath!!.toKString()
+            val realpath = allocArray<ByteVar>(PATH_MAX + 1)
+            realpath(path, realpath)
+            println("Path: ${realpath.toKString()}")
+            realpath.toKString()
         }
     }
 
     actual fun resolve(folder: String): File {
-        return File(path.trimEnd('/') + "/" + folder)
+        return File(path.removeSuffix(pathSeparator) + pathSeparator + folder)
     }
 
     actual fun resolve(file: File): File {
-        return File(path.trimEnd('/') + "/" + file.path)
+        return File(path.removeSuffix(pathSeparator) + pathSeparator + file.path)
     }
 
     actual fun mkdirs(): Boolean {
@@ -27,7 +33,9 @@ actual class File actual constructor(
 
     actual fun isDirectory(): Boolean = memScoped {
         val sb = alloc<stat>()
-        stat(path, sb.ptr) == 0 && sb.st_mode.toInt() and S_IFDIR != 0
+        val stat = stat(path, sb.ptr)
+        val statIsDir = sb.st_mode.toInt() and S_IFDIR != 0
+        stat == 0 && statIsDir
     }
 
     actual fun remove(mode: RemoveMode): Boolean {
@@ -46,9 +54,10 @@ actual class File actual constructor(
         return exitCode == 0
     }
 
-    actual fun exists(): Boolean {
-        //TODO
-        return true
+    actual fun exists(): Boolean = memScoped {
+        val sb = alloc<stat>()
+        val stat = stat(path, sb.ptr)
+        stat == 0
     }
 
     actual fun listFiles(): List<File> {
