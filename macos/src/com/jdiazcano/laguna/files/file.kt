@@ -6,6 +6,13 @@ import platform.posix.*
 actual class File actual constructor(
     actual val path: String
 ) {
+    actual val absolutePath by lazy {
+        memScoped {
+            val realpath = realpath(path, null)
+            realpath!!.toKString()
+        }
+    }
+
     actual fun resolve(folder: String): File {
         return File(path.trimEnd('/') + "/" + folder)
     }
@@ -97,6 +104,7 @@ actual class File actual constructor(
             fputs(string, file)
         }
     }
+
 }
 
 fun CPointer<FILE>.use(block: () -> Unit) {

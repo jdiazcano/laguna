@@ -4,6 +4,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.arguments.transformAll
+import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.jdiazcano.laguna.files.File
@@ -18,17 +19,20 @@ class Laguna: CliktCommand() {
     val templateArguments: Map<String, String> by argument().multiple().transformAll { items ->
         (items + "name=$projectName").map { it.split("=", limit = 2) }.associate { it[0] to it[1] }
     }
+    val outputFolder: String by option("-o", "--output").default(".", "Current folder")
 
     override fun run() {
-        val repoFolder = File("/tmp/laguna-templates/$templateName")
-        val outputFolder = File("/tmp/$projectName").apply { mkdirs() }
-        val renderer = Templates(GitTemplateProvider(repoFolder))
+        val templateFolder = File("/tmp/laguna-templates/$templateName")
+        val outputFolder = File(outputFolder).resolve(projectName).apply { mkdirs() }
+        val renderer = Templates(GitTemplateProvider(templateFolder))
         runBlocking {
-            forEachDirectoryRecursive(repoFolder) {
-                File(it.path.replace("/tmp/laguna-templates/$templateName", "/tmp/$projectName")).mkdirs()
+            forEachDirectoryRecursive(templateFolder) {
+                File(it.path.replace(templateFolder.path, projectName)).mkdirs()
             }
-            forEachFileRecursive(repoFolder) {
-                outputFolder.resolve(it.path.replace("/tmp/laguna-templates/$templateName", "")).write(renderer.render(it.path, templateArguments))
+            forEachFileRecursive(templateFolder) {
+                // The file is relative to the repository folder
+                val relativeFile = it.path.replace(templateFolder.path, "")
+                outputFolder.resolve(relativeFile).write(renderer.render(it.path, templateArguments))
             }
         }
     }
@@ -54,16 +58,6 @@ suspend fun forEachFileRecursive(file: File, block: suspend (File) -> Unit) {
 
 fun main(args: Array<String>) {
     Laguna().main(args)
-//    val file = File("/tmp/randomdir")
-//    println("Removed? ${file.remove(RemoveMode.Recursive)}")
-//
-//    val repoFolder = File("/tmp/laguna-templates")
-//    prepareRepository(repoFolder)
-//
-//    val renderer = Templates(GitTemplateProvider(repoFolder))
-//    runBlocking {
-//        println(renderer.render("test-template/build.gradle.kts"))
-//    }
 }
 
 private fun prepareRepository(repoFolder: File) {

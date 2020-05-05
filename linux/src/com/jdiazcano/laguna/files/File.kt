@@ -43,4 +43,7 @@ actual class File actual constructor(
 
     actual fun write(string: String) {
     }
+
+    actual val absolutePath: String
+        get() = TODO("Not yet implemented")
 }

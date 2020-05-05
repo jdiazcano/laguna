@@ -2,6 +2,7 @@ package com.jdiazcano.laguna.files
 
 expect class File(path: String) {
     val path: String
+    val absolutePath: String
 
     fun resolve(folder: String): File
     fun resolve(file: File): File
