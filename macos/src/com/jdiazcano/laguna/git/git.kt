@@ -1,15 +1,10 @@
 package com.jdiazcano.laguna.git
 
 import cnames.structs.git_repository
-import com.jdiazcano.laguna.Laguna
 import com.jdiazcano.laguna.files.File
 import com.jdiazcano.laguna.files.allocValuePointedTo
 import kotlinx.cinterop.*
 import libgit2.*
-
-fun main(args: Array<String>) {
-    Laguna().main(args)
-}
 
 actual object Git {
     init {
