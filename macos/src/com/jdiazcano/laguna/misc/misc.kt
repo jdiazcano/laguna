@@ -1,9 +1,6 @@
 package com.jdiazcano.laguna.misc
 
-import kotlinx.cinterop.ByteVar
-import kotlinx.cinterop.allocArray
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.toKString
+import kotlinx.cinterop.*
 import platform.posix.PATH_MAX
 import platform.posix.getcwd
 import platform.posix.getenv
@@ -15,4 +12,10 @@ actual fun pwd(): String = memScoped {
     val realpath = allocArray<ByteVar>(PATH_MAX + 1)
     getcwd(realpath, PATH_MAX)
     return realpath.toKString()
+}
+
+inline fun <reified T : CPointed> NativePlacement.allocValuePointedTo(obj: () -> CPointer<T>): CPointerVar<T> {
+    val pointer = allocPointerTo<T>()
+    pointer.value = obj()
+    return pointer
 }

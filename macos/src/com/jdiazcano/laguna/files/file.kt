@@ -123,9 +123,3 @@ fun CPointer<FILE>.use(block: () -> Unit) {
         fclose(this)
     }
 }
-
-inline fun <reified T : CPointed> NativePlacement.allocValuePointedTo(obj: () -> CPointer<T>): CPointerVar<T> {
-    val pointer = allocPointerTo<T>()
-    pointer.value = obj()
-    return pointer
-}

@@ -2,6 +2,7 @@ package com.jdiazcano.laguna.git
 
 import cnames.structs.git_repository
 import com.jdiazcano.laguna.files.File
+import com.jdiazcano.laguna.misc.allocValuePointedTo
 import kotlinx.cinterop.*
 import libgit2.*
 
@@ -136,10 +137,4 @@ private fun Int.throwGitErrorIfNeeded(): Int {
     }
 
     return this
-}
-
-inline fun <reified T : CPointed> NativePlacement.allocValuePointedTo(obj: () -> CPointer<T>): CPointerVar<T> {
-    val pointer = allocPointerTo<T>()
-    pointer.value = obj()
-    return pointer
 }

@@ -2,7 +2,7 @@ package com.jdiazcano.laguna.git
 
 import cnames.structs.git_repository
 import com.jdiazcano.laguna.files.File
-import com.jdiazcano.laguna.files.allocValuePointedTo
+import com.jdiazcano.laguna.misc.allocValuePointedTo
 import kotlinx.cinterop.*
 import libgit2.*
 
