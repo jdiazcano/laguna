@@ -4,10 +4,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.arguments.transformAll
-import com.github.ajalt.clikt.parameters.options.default
-import com.github.ajalt.clikt.parameters.options.flag
-import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.options.required
+import com.github.ajalt.clikt.parameters.options.*
 import com.jdiazcano.laguna.files.File
 import com.jdiazcano.laguna.git.Git
 import com.jdiazcano.laguna.git.GitException
@@ -18,15 +15,15 @@ import com.jdiazcano.laguna.misc.runBlocking
 import com.soywiz.korte.Templates
 
 class Laguna: CliktCommand() {
-    val templateName: String by argument()
-    val projectName: String by option("-n", "--name").required()
+    val templateName: String by argument(help = "Name of the template.")
+    val projectName: String by option("-n", "--name", help = "Project name (and name of the created folder)").required()
     val templateArguments: Map<String, String> by argument().multiple().transformAll { items ->
         (items + "name=$projectName").map { it.split("=", limit = 2) }.associate { it[0] to it[1] }
     }
-    val outputFolder: String by option("-o", "--output").default(".", "Current folder")
+    val outputFolder: String by option("-o", "--output", help = "Folder where the project will be created (Defaults to current folder)").default(".", "Current folder")
     val verbose: Boolean by option("-v", "--verbose").flag(default = false)
-    val repositoryPath: String? by option("-r", "--repository")
-    val noClean: Boolean by option("-C", "--no-clean").flag(default = false)
+    val repositoryPath: String? by option("-r", "--repository", help = "Repository (or folder) where templates are located.")
+    val noClean: Boolean by option("-C", "--no-clean", help = "Git repository will not be updated or cleaned up.").flag(default = false)
 
     override fun run() {
         val repository = `initialize and clean repository`()
