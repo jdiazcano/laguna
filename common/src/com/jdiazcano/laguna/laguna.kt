@@ -67,7 +67,8 @@ class Laguna: CliktCommand() {
 
     private fun `initialize and clean repository`(): File {
         val repository = File(repositoryPath ?: "/tmp/laguna-templates")
-        if (!noClean) {
+        val clean = !noClean && repository.resolve(".git").exists()
+        if (clean) {
             try {
                 debug("Preparing repository...")
                 prepareRepository(repository)
