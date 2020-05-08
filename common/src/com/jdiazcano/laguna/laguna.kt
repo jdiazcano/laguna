@@ -10,11 +10,12 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.jdiazcano.laguna.files.File
 import com.jdiazcano.laguna.git.Git
+import com.jdiazcano.laguna.git.GitException
 import com.jdiazcano.laguna.git.GitRepository
+import com.jdiazcano.laguna.misc.ExitCode
+import com.jdiazcano.laguna.misc.exit
 import com.jdiazcano.laguna.misc.runBlocking
 import com.soywiz.korte.Templates
-
-private var VERBOSE = false
 
 class Laguna: CliktCommand() {
     val templateName: String by argument()
@@ -24,32 +25,61 @@ class Laguna: CliktCommand() {
     }
     val outputFolder: String by option("-o", "--output").default(".", "Current folder")
     val verbose: Boolean by option("-v", "--verbose").flag(default = false)
+    val repositoryPath: String? by option("-r", "--repository")
+    val noClean: Boolean by option("-C", "--no-clean").flag(default = false)
 
     override fun run() {
-        VERBOSE = verbose
-
-        val repository = File("/tmp/laguna-templates")
-        prepareRepository(repository)
+        val repository = `initialize and clean repository`()
 
         val templateFolder = repository.resolve(templateName)
-        val outputFolder = File(outputFolder).resolve(projectName).apply { mkdirs() }
+        val outputFolder = File(outputFolder).resolve(projectName).apply {
+            if (exists()) {
+                println("Output folder already exists. Select a folder that does not exist.")
+                exit(ExitCode.FOLDER_ALREADY_EXISTS)
+            }
+            mkdirs()
+        }
         debug("Created output folder: ${outputFolder.path}")
         val renderer = Templates(GitTemplateProvider(templateFolder))
-        runBlocking {
-            debug("Creating all directories")
-            forEachDirectoryRecursive(templateFolder) {
-                val file = File(it.path.replace(templateFolder.path, projectName))
-                debug("Creating directory: ${file.path}")
-                file.mkdirs()
-            }
-            forEachFileRecursive(templateFolder) {
-                // The file is relative to the repository folder
-                val relativeFile = it.path.replace(templateFolder.path, "")
-                debug("Rendering file: $relativeFile")
-                val renderedTemplate = renderer.render(it.path, templateArguments)
-                outputFolder.resolve(relativeFile).write(renderedTemplate)
+        renderer.render(templateFolder, outputFolder)
+
+        exit(ExitCode.ALL_GOOD)
+    }
+
+    /**
+     * Renders a whole folder
+     */
+    private fun Templates.render(templateFolder: File, outputFolder: File) = runBlocking {
+        debug("Creating all directories")
+        forEachDirectoryRecursive(templateFolder) {
+            val file = File(it.path.replace(templateFolder.path, projectName))
+            debug("Creating directory: ${file.path}")
+            file.mkdirs()
+        }
+        forEachFileRecursive(templateFolder) {
+            // The file is relative to the repository folder
+            val relativeFile = it.path.replace(templateFolder.path, "")
+            debug("Rendering file: $relativeFile")
+            val renderedTemplate = render(it.path, templateArguments)
+            outputFolder.resolve(relativeFile).write(renderedTemplate)
+        }
+    }
+
+    private fun `initialize and clean repository`(): File {
+        val repository = File(repositoryPath ?: "/tmp/laguna-templates")
+        if (!noClean) {
+            try {
+                debug("Preparing repository...")
+                prepareRepository(repository)
+            } catch (e: GitException) {
+                println("Could not clean the repository in: ${repository.absolutePath}")
+                println("Reason: ${e.message}")
+                println()
+                println("If you don't want to clean up the repository (reset, pull), use --no-clean.")
+                exit(ExitCode.GIT_ERROR)
             }
         }
+        return repository
     }
 }
 
@@ -71,8 +101,9 @@ suspend fun forEachFileRecursive(file: File, block: suspend (File) -> Unit) {
     }
 }
 
+val laguna = Laguna()
 fun main(args: Array<String>) {
-    Laguna().main(args)
+    laguna.main(args)
 }
 
 private fun prepareRepository(repoFolder: File) {
@@ -97,7 +128,7 @@ private fun prepareRepository(repoFolder: File) {
 }
 
 fun debug(message: String) {
-    if (VERBOSE) {
+    if (laguna.verbose) {
         println(message)
     }
 }
