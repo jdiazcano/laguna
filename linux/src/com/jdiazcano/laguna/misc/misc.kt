@@ -4,6 +4,7 @@ import kotlinx.cinterop.*
 import platform.posix.PATH_MAX
 import platform.posix.getcwd
 import platform.posix.getenv
+import kotlin.system.exitProcess
 
 actual fun env(name: String) = getenv(name)?.toKString()
 actual fun <T> runBlocking(block: suspend () -> T): T = kotlinx.coroutines.runBlocking { block() }
@@ -18,4 +19,8 @@ inline fun <reified T : CPointed> NativePlacement.allocValuePointedTo(obj: () ->
     val pointer = allocPointerTo<T>()
     pointer.value = obj()
     return pointer
+}
+
+actual fun exit(exitCode: ExitCode) {
+    exitProcess(exitCode.code)
 }
