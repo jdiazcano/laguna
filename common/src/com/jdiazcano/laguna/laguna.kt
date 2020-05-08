@@ -14,6 +14,8 @@ import com.jdiazcano.laguna.misc.exit
 import com.jdiazcano.laguna.misc.runBlocking
 import com.soywiz.korte.Templates
 
+private const val DEFAULT_REPOSITORY_FOLDER = "/tmp/laguna-templates"
+
 class Laguna: CliktCommand() {
     val templateName: String by argument(help = "Name of the template.")
     val projectName: String by option("-n", "--name", help = "Project name (and name of the created folder)").required()
@@ -24,6 +26,7 @@ class Laguna: CliktCommand() {
     val verbose: Boolean by option("-v", "--verbose").flag(default = false)
     val repositoryPath: String? by option("-r", "--repository", help = "Repository (or folder) where templates are located.")
     val noClean: Boolean by option("-C", "--no-clean", help = "Git repository will not be updated or cleaned up.").flag(default = false)
+    val forceClean: Boolean by option("-c", "--clean", help = "Force clean up of repository.").flag(default = false)
 
     override fun run() {
         val repository = `initialize and clean repository`()
@@ -63,8 +66,10 @@ class Laguna: CliktCommand() {
     }
 
     private fun `initialize and clean repository`(): File {
-        val repository = File(repositoryPath ?: "/tmp/laguna-templates")
-        val clean = !noClean && repository.resolve(".git").exists()
+        val repository = File(repositoryPath ?: DEFAULT_REPOSITORY_FOLDER)
+        val isGitRepo = repository.resolve(".git").exists()
+        val forceCleanup = forceClean
+        val clean = (!noClean || forceCleanup) && isGitRepo
         if (clean) {
             try {
                 debug("Preparing repository...")
