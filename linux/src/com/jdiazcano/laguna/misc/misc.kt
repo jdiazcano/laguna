@@ -21,6 +21,7 @@ inline fun <reified T : CPointed> NativePlacement.allocValuePointedTo(obj: () ->
     return pointer
 }
 
-actual fun exit(exitCode: ExitCode) {
+actual fun exit(exitCode: ExitCode, message: String?) {
+    message?.let { println(it) }
     exitProcess(exitCode.code)
 }

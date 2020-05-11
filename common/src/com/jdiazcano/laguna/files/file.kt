@@ -14,7 +14,7 @@ expect class File(path: String) {
     fun isDirectory(): Boolean
     fun remove(mode: RemoveMode = RemoveMode.Default): Boolean
     fun read(): String
-    fun listFiles(): List<File>
+    fun files(): List<File>
     fun exists(): Boolean
     fun write(string: String)
 }

@@ -12,11 +12,13 @@ import com.jdiazcano.laguna.git.GitRepository
 import com.jdiazcano.laguna.misc.ExitCode
 import com.jdiazcano.laguna.misc.exit
 import com.jdiazcano.laguna.misc.runBlocking
+import com.soywiz.korte.TemplateConfig
 import com.soywiz.korte.Templates
 
 private const val DEFAULT_REPOSITORY_FOLDER = "/tmp/laguna-templates"
 
-class Laguna: CliktCommand() {
+class Laguna: CliktCommand(printHelpOnEmptyArgs = true) {
+    val repositoryPath: String by option("-r", "--repository", help = "Repository (or folder) where templates are located.").default(DEFAULT_REPOSITORY_FOLDER)
     val templateName: String by argument(help = "Name of the template.")
     val projectName: String by option("-n", "--name", help = "Project name (and name of the created folder)").required()
     val templateArguments: Map<String, String> by argument().multiple().transformAll { items ->
@@ -24,7 +26,6 @@ class Laguna: CliktCommand() {
     }
     val outputFolder: String by option("-o", "--output", help = "Folder where the project will be created (Defaults to current folder)").default(".", "Current folder")
     val verbose: Boolean by option("-v", "--verbose").flag(default = false)
-    val repositoryPath: String? by option("-r", "--repository", help = "Repository (or folder) where templates are located.")
     val noClean: Boolean by option("-C", "--no-clean", help = "Git repository will not be updated or cleaned up.").flag(default = false)
     val forceClean: Boolean by option("-c", "--clean", help = "Force clean up of repository.").flag(default = false)
 
@@ -40,7 +41,13 @@ class Laguna: CliktCommand() {
             mkdirs()
         }
         debug("Created output folder: ${outputFolder.path}")
-        val renderer = Templates(GitTemplateProvider(templateFolder))
+        val config = TemplateConfig().apply {
+            replaceVariablePocessor { name, previous ->
+                val value = previous(name) ?: exit(ExitCode.MISSING_VARIABLE_VALUE, "Variable '$name' is missing.")
+                value
+            }
+        }
+        val renderer = Templates(GitTemplateProvider(templateFolder), config = config)
         renderer.render(templateFolder, outputFolder)
 
         exit(ExitCode.ALL_GOOD)
@@ -66,7 +73,7 @@ class Laguna: CliktCommand() {
     }
 
     private fun `initialize and clean repository`(): File {
-        val repository = File(repositoryPath ?: DEFAULT_REPOSITORY_FOLDER)
+        val repository = File(repositoryPath)
         val isGitRepo = repository.resolve(".git").exists()
         val forceCleanup = forceClean
         val clean = (!noClean || forceCleanup) && isGitRepo
@@ -88,7 +95,7 @@ class Laguna: CliktCommand() {
 
 suspend fun forEachDirectoryRecursive(file: File, block: suspend (File) -> Unit) {
     if (file.isDirectory()) {
-        file.listFiles().forEach {
+        file.files().forEach {
             if (it.isDirectory()) {
                 forEachFileRecursive(it, block)
             }
@@ -98,7 +105,7 @@ suspend fun forEachDirectoryRecursive(file: File, block: suspend (File) -> Unit)
 
 suspend fun forEachFileRecursive(file: File, block: suspend (File) -> Unit) {
     if (file.isDirectory()) {
-        file.listFiles().forEach { forEachFileRecursive(it, block) }
+        file.files().forEach { forEachFileRecursive(it, block) }
     } else {
         block(file)
     }

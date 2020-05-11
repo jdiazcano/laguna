@@ -9,6 +9,7 @@ actual fun pwd(): String {
     return java.io.File(".").absolutePath
 }
 
-actual fun exit(exitCode: ExitCode) {
+actual fun exit(exitCode: ExitCode, message: String?) {
+    message?.let { println(it) }
     exitProcess(exitCode.code)
 }

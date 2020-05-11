@@ -60,7 +60,7 @@ actual class File actual constructor(
         stat == 0
     }
 
-    actual fun listFiles(): List<File> {
+    actual fun files(): List<File> {
         if (!exists()) {
             throw IllegalArgumentException("'$path' does not exist.")
         }
