@@ -14,3 +14,5 @@ enum class ExitCode(val code: Int) {
     GIT_ERROR(2),
     ;
 }
+
+class MissingVariableException(variableName: String) : Exception(message = "Variable '$variableName' is missing.")
