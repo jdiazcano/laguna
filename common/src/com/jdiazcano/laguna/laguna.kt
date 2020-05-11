@@ -38,9 +38,7 @@ class Laguna: CliktCommand(printHelpOnEmptyArgs = true) {
                 println("Output folder already exists. Select a folder that does not exist.")
                 exit(ExitCode.FOLDER_ALREADY_EXISTS)
             }
-            mkdirs()
         }
-        debug("Created output folder: ${outputFolder.path}")
         val config = TemplateConfig().apply {
             replaceVariablePocessor { name, previous ->
                 val value = previous(name) ?: exit(ExitCode.MISSING_VARIABLE_VALUE, "Variable '$name' is missing.")
@@ -57,18 +55,23 @@ class Laguna: CliktCommand(printHelpOnEmptyArgs = true) {
      * Renders a whole folder
      */
     private fun Templates.render(templateFolder: File, outputFolder: File) = runBlocking {
+        val renderedTemplates = hashMapOf<File, String>()
+        forEachFileRecursive(templateFolder) {
+            // The file is relative to the repository folder
+            val relativeFile = it.path.replace(templateFolder.path, "")
+            debug("Rendering file: $relativeFile")
+            val renderedTemplate = render(it.path, templateArguments)
+            renderedTemplates[outputFolder.resolve(relativeFile)] = renderedTemplate
+        }
         debug("Creating all directories")
         forEachDirectoryRecursive(templateFolder) {
             val file = File(it.path.replace(templateFolder.path, projectName))
             debug("Creating directory: ${file.path}")
             file.mkdirs()
         }
-        forEachFileRecursive(templateFolder) {
-            // The file is relative to the repository folder
-            val relativeFile = it.path.replace(templateFolder.path, "")
-            debug("Rendering file: $relativeFile")
-            val renderedTemplate = render(it.path, templateArguments)
-            outputFolder.resolve(relativeFile).write(renderedTemplate)
+        debug("Writing templates into files")
+        renderedTemplates.forEach {
+            it.key.write(it.value)
         }
     }
 
@@ -103,7 +106,7 @@ suspend fun forEachDirectoryRecursive(file: File, block: suspend (File) -> Unit)
     }
 }
 
-suspend fun forEachFileRecursive(file: File, block: suspend (File) -> Unit) {
+suspend fun <T> forEachFileRecursive(file: File, block: suspend (File) -> T) {
     if (file.isDirectory()) {
         file.files().forEach { forEachFileRecursive(it, block) }
     } else {
