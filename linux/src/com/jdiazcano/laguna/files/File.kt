@@ -1,5 +1,6 @@
 package com.jdiazcano.laguna.files
 
+import com.jdiazcano.laguna.debug
 import com.jdiazcano.laguna.misc.allocValuePointedTo
 import kotlinx.cinterop.*
 import platform.posix.*
@@ -15,17 +16,24 @@ actual class File actual constructor(
         memScoped {
             val realpath = allocArray<ByteVar>(PATH_MAX + 1)
             realpath(path, realpath)
-            println("Path: ${realpath.toKString()}")
             realpath.toKString()
         }
     }
 
-    actual fun resolve(folder: String): File {
-        return File(path.removeSuffix(pathSeparator) + pathSeparator + folder)
+    actual fun resolve(name: String): File {
+        return if (path.isNotEmpty()) {
+            File(path.removeSuffix(pathSeparator) + pathSeparator + name.removePrefix(pathSeparator))
+        } else {
+            File(name)
+        }
     }
 
     actual fun resolve(file: File): File {
-        return File(path.removeSuffix(pathSeparator) + pathSeparator + file.path)
+        return if (path.isNotEmpty()) {
+            File(path.removeSuffix(pathSeparator) + pathSeparator + file.path.removePrefix(pathSeparator))
+        } else {
+            File(file.path)
+        }
     }
 
     actual fun mkdirs(): Boolean {
@@ -71,13 +79,16 @@ actual class File actual constructor(
         }
 
         val files = arrayListOf<File>()
+//        debug("Opening dir: $path")
+//        debug("Opening dir: $absolutePath")
         val dir = opendir(path)
         dir?.pointed?.let {
             var pathPointer = readdir(dir)
             while (pathPointer?.pointed != null) {
                 val pathString = pathPointer.pointed.d_name.toKString()
                 if (pathString != "." && pathString != "..") {
-                    files.add(File(pathString))
+//                    println("Listing file: $pathString")
+                    files.add(resolve(pathString))
                 }
                 pathPointer = readdir(dir)
             }
@@ -106,7 +117,7 @@ actual class File actual constructor(
     }
 
     actual fun write(string: String) {
-        val file = fopen(path, "w") ?: throw IllegalStateException("Can't write into '$path'")
+        val file = fopen(path, "w") ?: fopen(path.removePrefix("./"), "w") ?: throw IllegalStateException("Can't write into '$path'")
 
         file.use2 {
             fputs(string, file)

@@ -19,8 +19,8 @@ actual class File actual constructor(
         }
     }
 
-    actual fun resolve(folder: String): File {
-        return File(path.removeSuffix(pathSeparator) + pathSeparator + folder)
+    actual fun resolve(name: String): File {
+        return File(path.removeSuffix(pathSeparator) + pathSeparator + name)
     }
 
     actual fun resolve(file: File): File {

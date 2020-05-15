@@ -56,12 +56,15 @@ class Laguna: CliktCommand(printHelpOnEmptyArgs = true) {
      */
     private fun Templates.render(templateFolder: File, outputFolder: File) = runBlocking {
         val renderedTemplates = hashMapOf<File, String>()
+        debug("Rendering folder: ${templateFolder.absolutePath}")
         forEachFileRecursive(templateFolder) {
             // The file is relative to the repository folder
             val relativeFile = it.path.replace(templateFolder.path, "")
             debug("Rendering file: $relativeFile")
-            val renderedTemplate = render(it.path, templateArguments)
-            renderedTemplates[outputFolder.resolve(relativeFile)] = renderedTemplate
+            val renderedTemplate = render(relativeFile, templateArguments)
+            val outputFile = outputFolder.resolve(relativeFile)
+            debug("Will render ${outputFile.path}")
+            renderedTemplates[outputFile] = renderedTemplate
         }
         debug("Creating all directories")
         forEachDirectoryRecursive(templateFolder) {
@@ -107,8 +110,12 @@ suspend fun forEachDirectoryRecursive(file: File, block: suspend (File) -> Unit)
 }
 
 suspend fun <T> forEachFileRecursive(file: File, block: suspend (File) -> T) {
+    debug("Foreach recursive: ${file.absolutePath}")
     if (file.isDirectory()) {
-        file.files().forEach { forEachFileRecursive(it, block) }
+        file.files().forEach {
+            println("Executing function for: ${it.absolutePath}")
+            forEachFileRecursive(it, block)
+        }
     } else {
         block(file)
     }

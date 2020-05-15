@@ -8,7 +8,7 @@ expect class File(path: String) {
     val path: String
     val absolutePath: String
 
-    fun resolve(folder: String): File
+    fun resolve(name: String): File
     fun resolve(file: File): File
     fun mkdirs(): Boolean
     fun isDirectory(): Boolean

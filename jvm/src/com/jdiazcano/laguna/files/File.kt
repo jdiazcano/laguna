@@ -6,7 +6,7 @@ actual class File actual constructor(path: String) {
 
     actual val absolutePath by lazy { "" }
 
-    actual fun resolve(folder: String): File {
+    actual fun resolve(name: String): File {
         TODO("Not yet implemented")
     }
 
