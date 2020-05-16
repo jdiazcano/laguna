@@ -21,7 +21,6 @@ class FileTest {
 
         val realpath = pwd()
         assertEquals(realpath + File.pathSeparator + "path", file.absolutePath)
-        assertEquals(realpath + File.pathSeparator + "path", file.absolutePath)
     }
 
     @Test
@@ -34,6 +33,20 @@ class FileTest {
     @Test
     fun `resolve a file with another file`() {
         val file = File("path").resolve(File("subpath"))
+
+        assertEquals("path" + File.pathSeparator + "subpath", file.path)
+    }
+
+    @Test
+    fun `resolve a file with another file source has separator`() {
+        val file = File("path/").resolve(File("subpath"))
+
+        assertEquals("path" + File.pathSeparator + "subpath", file.path)
+    }
+
+    @Test
+    fun `resolve a file with another file resolved has separator`() {
+        val file = File("path${File.pathSeparator}").resolve(File("${File.pathSeparator}subpath"))
 
         assertEquals("path" + File.pathSeparator + "subpath", file.path)
     }

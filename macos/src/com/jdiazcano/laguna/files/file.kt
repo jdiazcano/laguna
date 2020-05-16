@@ -1,5 +1,6 @@
 package com.jdiazcano.laguna.files
 
+import com.jdiazcano.laguna.misc.allocValuePointedTo
 import kotlinx.cinterop.*
 import platform.posix.*
 
@@ -20,11 +21,19 @@ actual class File actual constructor(
     }
 
     actual fun resolve(name: String): File {
-        return File(path.removeSuffix(pathSeparator) + pathSeparator + name)
+        return if (path.isNotEmpty()) {
+            File(path.removeSuffix(pathSeparator) + pathSeparator + name.removePrefix(pathSeparator))
+        } else {
+            File(name)
+        }
     }
 
     actual fun resolve(file: File): File {
-        return File(path.removeSuffix(pathSeparator) + pathSeparator + file.path)
+        return if (path.isNotEmpty()) {
+            File(path.removeSuffix(pathSeparator) + pathSeparator + file.path.removePrefix(pathSeparator))
+        } else {
+            File(file.path)
+        }
     }
 
     actual fun mkdirs(): Boolean {
@@ -34,7 +43,7 @@ actual class File actual constructor(
     actual fun isDirectory(): Boolean = memScoped {
         val sb = alloc<stat>()
         val stat = stat(path, sb.ptr)
-        val statIsDir = sb.st_mode.toInt() and S_IFDIR != 0
+        val statIsDir = (sb.st_mode.toInt() and S_IFDIR) != 0
         stat == 0 && statIsDir
     }
 
@@ -76,7 +85,7 @@ actual class File actual constructor(
             while (pathPointer?.pointed != null) {
                 val pathString = pathPointer.pointed.d_name.toKString()
                 if (pathString != "." && pathString != "..") {
-                    files.add(File(pathString))
+                    files.add(resolve(pathString))
                 }
                 pathPointer = readdir(dir)
             }

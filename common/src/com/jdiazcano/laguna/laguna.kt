@@ -12,6 +12,7 @@ import com.jdiazcano.laguna.git.GitRepository
 import com.jdiazcano.laguna.misc.ExitCode
 import com.jdiazcano.laguna.misc.exit
 import com.jdiazcano.laguna.misc.runBlocking
+import com.soywiz.korte.Template
 import com.soywiz.korte.TemplateConfig
 import com.soywiz.korte.Templates
 
@@ -24,7 +25,7 @@ class Laguna: CliktCommand(printHelpOnEmptyArgs = true) {
     val templateArguments: Map<String, String> by argument().multiple().transformAll { items ->
         (items + "name=$projectName").map { it.split("=", limit = 2) }.associate { it[0] to it[1] }
     }
-    val outputFolder: String by option("-o", "--output", help = "Folder where the project will be created (Defaults to current folder)").default(".", "Current folder")
+    val outputFolder: String by option("-o", "--output", help = "Folder where the project will be created (Defaults to current folder)").default("", "Current folder")
     val verbose: Boolean by option("-v", "--verbose").flag(default = false)
     val noClean: Boolean by option("-C", "--no-clean", help = "Git repository will not be updated or cleaned up.").flag(default = false)
     val forceClean: Boolean by option("-c", "--clean", help = "Force clean up of repository.").flag(default = false)
@@ -63,12 +64,16 @@ class Laguna: CliktCommand(printHelpOnEmptyArgs = true) {
             debug("Rendering file: $relativeFile")
             val renderedTemplate = render(relativeFile, templateArguments)
             val outputFile = outputFolder.resolve(relativeFile)
-            debug("Will render ${outputFile.path}")
-            renderedTemplates[outputFile] = renderedTemplate
+            val nameTemplate = Template(outputFile.path, config)
+            val renderedOutputFile = File(nameTemplate(templateArguments))
+            debug("Will render ${renderedOutputFile.path}")
+            renderedTemplates[renderedOutputFile] = renderedTemplate
         }
         debug("Creating all directories")
         forEachDirectoryRecursive(templateFolder) {
-            val file = File(it.path.replace(templateFolder.path, projectName))
+            val directoryName = it.path.replace(templateFolder.path, projectName)
+            val renderedDirectoryName = Template(directoryName, config)(templateArguments)
+            val file = File(renderedDirectoryName)
             debug("Creating directory: ${file.path}")
             file.mkdirs()
         }
@@ -103,7 +108,8 @@ suspend fun forEachDirectoryRecursive(file: File, block: suspend (File) -> Unit)
     if (file.isDirectory()) {
         file.files().forEach {
             if (it.isDirectory()) {
-                forEachFileRecursive(it, block)
+                block(it)
+                forEachDirectoryRecursive(it, block)
             }
         }
     }
