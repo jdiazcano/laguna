@@ -20,6 +20,14 @@ actual class File actual constructor(
         }
     }
 
+    actual val size by lazy {
+        val file = fopen(path, "rb") ?: throw IllegalStateException("cannot open input file $path")
+        file.use2 {
+            fseek(file, 0, SEEK_END)
+            ftell(file)
+        }
+    }
+
     actual fun resolve(name: String): File {
         return if (path.isNotEmpty()) {
             File(path.removeSuffix(pathSeparator) + pathSeparator + name.removePrefix(pathSeparator))
@@ -116,6 +124,16 @@ actual class File actual constructor(
         }
     }
 
+    actual fun readBytes(): ByteArray {
+        val file = fopen(path, "rb") ?: throw IllegalStateException("cannot open input file $path")
+        val length = size
+        val bytes = ByteArray(length.toInt())
+        bytes.usePinned {
+            fread(it.addressOf(0), length.convert(), 1.convert(), file)
+        }
+        return bytes
+    }
+
     actual fun write(string: String) {
         val file = fopen(path, "w") ?: fopen(path.removePrefix("./"), "w") ?: throw IllegalStateException("Can't write into '$path'")
 
@@ -124,12 +142,22 @@ actual class File actual constructor(
         }
     }
 
+    actual fun write(bytes: ByteArray) {
+        val file = fopen(path, "wb") ?: throw IllegalStateException("Can't write into '$path'")
+
+        file.use2 {
+            bytes.usePinned {
+                fwrite(it.addressOf(0), bytes.size.convert(), 1.convert(), file)
+            }
+        }
+    }
+
 }
 
 // TODO why having to use methods in 2 different
-fun CPointer<FILE>.use2(block: () -> Unit) {
+fun <T> CPointer<FILE>.use2(block: () -> T) : T{
     try {
-        block()
+        return block()
     } finally {
         fclose(this)
     }
