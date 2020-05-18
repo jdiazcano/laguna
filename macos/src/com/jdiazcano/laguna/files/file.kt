@@ -15,7 +15,6 @@ actual class File actual constructor(
         memScoped {
             val realpath = allocArray<ByteVar>(PATH_MAX + 1)
             realpath(path, realpath)
-            println("Path: ${realpath.toKString()}")
             realpath.toKString()
         }
     }
@@ -115,6 +114,24 @@ actual class File actual constructor(
         }
     }
 
+    actual fun readBytes(): ByteArray {
+        val file = fopen(path, "rb") ?: throw IllegalStateException("cannot open input file $path")
+        val length = size()
+        val bytes = ByteArray(length.toInt())
+        bytes.usePinned {
+            fread(it.addressOf(0), length.convert(), 1.convert(), file)
+        }
+        return bytes
+    }
+
+    actual fun size(): Long {
+        val file = fopen(path, "rb") ?: throw IllegalStateException("cannot open input file $path")
+        return file.use {
+            fseek(file, 0, SEEK_END)
+            ftell(file)
+        }
+    }
+
     actual fun write(string: String) {
         val file = fopen(path, "w") ?: throw IllegalStateException("Can't write into '$path'")
 
@@ -123,11 +140,21 @@ actual class File actual constructor(
         }
     }
 
+    actual fun write(bytes: ByteArray) {
+        val file = fopen(path, "wb") ?: throw IllegalStateException("Can't write into '$path'")
+
+        file.use {
+            bytes.usePinned {
+                fwrite(it.addressOf(0), bytes.size.convert(), 1.convert(), file)
+            }
+        }
+    }
+
 }
 
-fun CPointer<FILE>.use(block: () -> Unit) {
+fun <T> CPointer<FILE>.use(block: () -> T) : T{
     try {
-        block()
+        return block()
     } finally {
         fclose(this)
     }

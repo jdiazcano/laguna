@@ -5,7 +5,10 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.arguments.transformAll
 import com.github.ajalt.clikt.parameters.options.*
+import com.jdiazcano.laguna.files.BinaryOutput
 import com.jdiazcano.laguna.files.File
+import com.jdiazcano.laguna.files.Output
+import com.jdiazcano.laguna.files.StringOutput
 import com.jdiazcano.laguna.git.Git
 import com.jdiazcano.laguna.git.GitException
 import com.jdiazcano.laguna.git.GitRepository
@@ -56,13 +59,17 @@ class Laguna: CliktCommand(printHelpOnEmptyArgs = true) {
      * Renders a whole folder
      */
     private fun Templates.render(templateFolder: File, outputFolder: File) = runBlocking {
-        val renderedTemplates = hashMapOf<File, String>()
+        val renderedTemplates = hashMapOf<File, Output>()
         debug("Rendering folder: ${templateFolder.absolutePath}")
         forEachFileRecursive(templateFolder) {
             // The file is relative to the repository folder
             val relativeFile = it.path.replace(templateFolder.path, "")
             debug("Rendering file: $relativeFile")
-            val renderedTemplate = render(relativeFile, templateArguments)
+            val renderedTemplate = if (it.absolutePath.endsWith(".jar")) {
+                BinaryOutput(File(it.absolutePath).readBytes())
+            } else {
+                StringOutput(render(relativeFile, templateArguments))
+            }
             val outputFile = outputFolder.resolve(relativeFile)
             val nameTemplate = Template(outputFile.path, config)
             val renderedOutputFile = File(nameTemplate(templateArguments))
@@ -78,8 +85,8 @@ class Laguna: CliktCommand(printHelpOnEmptyArgs = true) {
             file.mkdirs()
         }
         debug("Writing templates into files")
-        renderedTemplates.forEach {
-            it.key.write(it.value)
+        renderedTemplates.forEach { (file, output) ->
+            output.write(file)
         }
     }
 
@@ -87,7 +94,7 @@ class Laguna: CliktCommand(printHelpOnEmptyArgs = true) {
         val repository = File(repositoryPath)
         val isGitRepo = repository.resolve(".git").exists()
         val forceCleanup = forceClean
-        val clean = (!noClean || forceCleanup) && isGitRepo
+        val clean = (!noClean || forceCleanup) && (isGitRepo || !repository.exists())
         if (clean) {
             try {
                 debug("Preparing repository...")
@@ -119,7 +126,7 @@ suspend fun <T> forEachFileRecursive(file: File, block: suspend (File) -> T) {
     debug("Foreach recursive: ${file.absolutePath}")
     if (file.isDirectory()) {
         file.files().forEach {
-            println("Executing function for: ${it.absolutePath}")
+            debug("Executing function for: ${it.absolutePath}")
             forEachFileRecursive(it, block)
         }
     } else {

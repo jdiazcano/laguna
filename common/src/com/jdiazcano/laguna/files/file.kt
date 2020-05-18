@@ -14,9 +14,12 @@ expect class File(path: String) {
     fun isDirectory(): Boolean
     fun remove(mode: RemoveMode = RemoveMode.Default): Boolean
     fun read(): String
+    fun readBytes(): ByteArray
     fun files(): List<File>
     fun exists(): Boolean
     fun write(string: String)
+    fun write(bytes: ByteArray)
+    fun size(): Long
 }
 
 enum class RemoveMode {
