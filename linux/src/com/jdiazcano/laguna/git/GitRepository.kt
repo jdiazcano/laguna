@@ -1,6 +1,7 @@
 package com.jdiazcano.laguna.git
 
 import cnames.structs.git_repository
+import com.jdiazcano.laguna.debug
 import com.jdiazcano.laguna.files.File
 import com.jdiazcano.laguna.misc.allocValuePointedTo
 import kotlinx.cinterop.*
@@ -35,7 +36,7 @@ actual class GitRepository actual constructor(private val file: File) {
             val minor = alloc<IntVar>()
             val rev = alloc<IntVar>()
             git_libgit2_version(major.ptr, minor.ptr, rev.ptr)
-            println("Major: ${major.value}, minor: ${minor.value}, rev: ${rev.value}")
+            debug("Major: ${major.value}, minor: ${minor.value}, rev: ${rev.value}")
         }
     }
 
