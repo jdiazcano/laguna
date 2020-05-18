@@ -19,6 +19,14 @@ actual class File actual constructor(
         }
     }
 
+    actual val size by lazy {
+        val file = fopen(path, "rb") ?: throw IllegalStateException("cannot open input file $path")
+        file.use {
+            fseek(file, 0, SEEK_END)
+            ftell(file)
+        }
+    }
+
     actual fun resolve(name: String): File {
         return if (path.isNotEmpty()) {
             File(path.removeSuffix(pathSeparator) + pathSeparator + name.removePrefix(pathSeparator))
@@ -116,20 +124,12 @@ actual class File actual constructor(
 
     actual fun readBytes(): ByteArray {
         val file = fopen(path, "rb") ?: throw IllegalStateException("cannot open input file $path")
-        val length = size()
+        val length = size
         val bytes = ByteArray(length.toInt())
         bytes.usePinned {
             fread(it.addressOf(0), length.convert(), 1.convert(), file)
         }
         return bytes
-    }
-
-    actual fun size(): Long {
-        val file = fopen(path, "rb") ?: throw IllegalStateException("cannot open input file $path")
-        return file.use {
-            fseek(file, 0, SEEK_END)
-            ftell(file)
-        }
     }
 
     actual fun write(string: String) {

@@ -7,6 +7,7 @@ expect class File(path: String) {
 
     val path: String
     val absolutePath: String
+    val size: Long
 
     fun resolve(name: String): File
     fun resolve(file: File): File
@@ -19,7 +20,6 @@ expect class File(path: String) {
     fun exists(): Boolean
     fun write(string: String)
     fun write(bytes: ByteArray)
-    fun size(): Long
 }
 
 enum class RemoveMode {
