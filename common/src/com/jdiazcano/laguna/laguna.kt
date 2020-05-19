@@ -5,10 +5,7 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.arguments.transformAll
 import com.github.ajalt.clikt.parameters.options.*
-import com.jdiazcano.laguna.files.BinaryOutput
-import com.jdiazcano.laguna.files.File
-import com.jdiazcano.laguna.files.Output
-import com.jdiazcano.laguna.files.StringOutput
+import com.jdiazcano.laguna.files.*
 import com.jdiazcano.laguna.git.Git
 import com.jdiazcano.laguna.git.GitException
 import com.jdiazcano.laguna.git.GitRepository
@@ -23,11 +20,11 @@ class Laguna: CliktCommand(printHelpOnEmptyArgs = true) {
     val repositoryPath: String by option("-r", "--repository", help = "Repository (or folder) where templates are located.").default(DEFAULT_REPOSITORY_FOLDER)
     val templateName: String by argument(help = "Name of the template.")
     val projectName: String by option("-n", "--name", help = "Project name (and name of the created folder)").required()
-    val templateArguments: Map<String, String> by argument().multiple().transformAll { items ->
+    val templateArguments: Map<String, String> by argument(help = "Key=value arguments (can be multiple)").multiple().transformAll { items ->
         (items + "name=$projectName").map { it.split("=", limit = 2) }.associate { it[0] to it[1] }
     }
     val outputFolder: String by option("-o", "--output", help = "Folder where the project will be created (Defaults to current folder)").default("", "Current folder")
-    val verbose: Boolean by option("-v", "--verbose").flag(default = false)
+    val verbose: Boolean by option("-v", "--verbose", help = "Enable debug messages").flag(default = false)
     val noClean: Boolean by option("-C", "--no-clean", help = "Git repository will not be updated or cleaned up.").flag(default = false)
     val forceClean: Boolean by option("-c", "--clean", help = "Force clean up of repository.").flag(default = false)
 
@@ -58,11 +55,11 @@ class Laguna: CliktCommand(printHelpOnEmptyArgs = true) {
     private fun Templates.render(templateFolder: File, outputFolder: File) = runBlocking {
         val renderedTemplates = hashMapOf<File, Output>()
         debug("Rendering folder: ${templateFolder.absolutePath}")
-        forEachFileRecursive(templateFolder) {
+        templateFolder.forEachFileRecursive {
             // The file is relative to the repository folder
             val relativeFile = it.path.replace(templateFolder.path, "")
             debug("Rendering file: $relativeFile")
-            val renderedTemplate = if (it.absolutePath.endsWith(".jar")) {
+            val renderedTemplate = if (it.isBinary()) {
                 BinaryOutput(File(it.absolutePath).readBytes())
             } else {
                 StringOutput(render(relativeFile, templateArguments))
@@ -74,7 +71,7 @@ class Laguna: CliktCommand(printHelpOnEmptyArgs = true) {
             renderedTemplates[renderedOutputFile] = renderedTemplate
         }
         debug("Creating all directories")
-        forEachDirectoryRecursive(templateFolder) {
+        templateFolder.forEachDirectoryRecursive {
             val directoryName = it.path.replace(templateFolder.path, projectName)
             val renderedDirectoryName = Template(directoryName, config)(templateArguments)
             val file = File(renderedDirectoryName)
@@ -105,29 +102,6 @@ class Laguna: CliktCommand(printHelpOnEmptyArgs = true) {
             }
         }
         return repository
-    }
-}
-
-suspend fun forEachDirectoryRecursive(file: File, block: suspend (File) -> Unit) {
-    if (file.isDirectory()) {
-        file.files().forEach {
-            if (it.isDirectory()) {
-                block(it)
-                forEachDirectoryRecursive(it, block)
-            }
-        }
-    }
-}
-
-suspend fun <T> forEachFileRecursive(file: File, block: suspend (File) -> T) {
-    debug("Foreach recursive: ${file.absolutePath}")
-    if (file.isDirectory()) {
-        file.files().forEach {
-            debug("Executing function for: ${it.absolutePath}")
-            forEachFileRecursive(it, block)
-        }
-    } else {
-        block(file)
     }
 }
 

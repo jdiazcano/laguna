@@ -1,5 +1,7 @@
 package com.jdiazcano.laguna.files
 
+import com.jdiazcano.laguna.debug
+
 expect class File(path: String) {
     companion object {
         val pathSeparator: String
@@ -26,4 +28,27 @@ enum class RemoveMode {
     Default,
     Recursive,
     ;
+}
+
+suspend fun File.forEachDirectoryRecursive(block: suspend (File) -> Unit) {
+    if (isDirectory()) {
+        files().forEach {
+            if (it.isDirectory()) {
+                block(it)
+                it.forEachDirectoryRecursive(block)
+            }
+        }
+    }
+}
+
+suspend fun <T> File.forEachFileRecursive(block: suspend (File) -> T) {
+    debug("Foreach recursive: $absolutePath")
+    if (isDirectory()) {
+        files().forEach {
+            debug("Executing function for: ${it.absolutePath}")
+            it.forEachFileRecursive(block)
+        }
+    } else {
+        block(this)
+    }
 }
