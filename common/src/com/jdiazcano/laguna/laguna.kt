@@ -12,9 +12,7 @@ import com.jdiazcano.laguna.files.StringOutput
 import com.jdiazcano.laguna.git.Git
 import com.jdiazcano.laguna.git.GitException
 import com.jdiazcano.laguna.git.GitRepository
-import com.jdiazcano.laguna.misc.ExitCode
-import com.jdiazcano.laguna.misc.exit
-import com.jdiazcano.laguna.misc.runBlocking
+import com.jdiazcano.laguna.misc.*
 import com.soywiz.korte.Template
 import com.soywiz.korte.TemplateConfig
 import com.soywiz.korte.Templates
@@ -39,20 +37,19 @@ class Laguna: CliktCommand(printHelpOnEmptyArgs = true) {
         val templateFolder = repository.resolve(templateName)
         val outputFolder = File(outputFolder).resolve(projectName).apply {
             if (exists()) {
-                println("Output folder already exists. Select a folder that does not exist.")
-                exit(ExitCode.FOLDER_ALREADY_EXISTS)
+                exit(ExitCode.FOLDER_ALREADY_EXISTS, "Output folder already exists. Select a folder that does not exist.".red.reset)
             }
         }
         val config = TemplateConfig().apply {
             replaceVariablePocessor { name, previous ->
-                val value = previous(name) ?: exit(ExitCode.MISSING_VARIABLE_VALUE, "Variable '$name' is missing.")
+                val value = previous(name) ?: exit(ExitCode.MISSING_VARIABLE_VALUE, "Variable '${name.red.reset}' is missing.")
                 value
             }
         }
         val renderer = Templates(GitTemplateProvider(templateFolder), config = config)
         renderer.render(templateFolder, outputFolder)
 
-        exit(ExitCode.ALL_GOOD)
+        exit(ExitCode.ALL_GOOD, "Template created!".grn.reset)
     }
 
     /**
