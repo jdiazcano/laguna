@@ -72,11 +72,11 @@ class Laguna: CliktCommand(printHelpOnEmptyArgs = true) {
         }
         debug("Creating all directories")
         templateFolder.forEachDirectoryRecursive {
-            val directoryName = it.path.replace(templateFolder.path, projectName)
+            val directoryName = it.path.replace(templateFolder.path, "")
             val renderedDirectoryName = Template(directoryName, config)(templateArguments)
-            val file = File(renderedDirectoryName)
-            debug("Creating directory: ${file.path}")
-            file.mkdirs()
+            val outputDirectory = outputFolder.resolve(renderedDirectoryName)
+            debug("Creating directory: ${outputDirectory.path}")
+            outputDirectory.mkdirs()
         }
         debug("Writing templates into files")
         renderedTemplates.forEach { (file, output) ->
