@@ -37,12 +37,7 @@ class Laguna: CliktCommand(printHelpOnEmptyArgs = true) {
                 exit(ExitCode.FOLDER_ALREADY_EXISTS, "Output folder already exists. Select a folder that does not exist.".red.reset)
             }
         }
-        val config = TemplateConfig().apply {
-            replaceVariablePocessor { name, previous ->
-                val value = previous(name) ?: exit(ExitCode.MISSING_VARIABLE_VALUE, "Variable '${name.red.reset}' is missing.")
-                value
-            }
-        }
+        val config = LagunaTemplateConfiguration()
         val renderer = Templates(GitTemplateProvider(templateFolder), config = config)
         renderer.render(templateFolder, outputFolder)
 
