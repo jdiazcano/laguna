@@ -60,6 +60,6 @@ There are two places where you can learn about templating:
 
 ## Build from source
 1. Checkout this project
-1. Run `./gradlew releaseCurrent` (Needs Java!)
+1. Run `./gradlew release` (Needs Java!)
 
 ### Building troubleshoot

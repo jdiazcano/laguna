@@ -1,4 +1,7 @@
 import org.apache.tools.ant.taskdefs.condition.Os
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 
 plugins {
     kotlin("multiplatform") version "1.3.70"
@@ -163,7 +166,12 @@ kotlin {
     }
 }
 
-val releaseCurrent by tasks.registering {
-    dependsOn("linkLagunaDebugExecutable${currentOs.capitalize()}")
+val release by tasks.registering {
     dependsOn("linkLagunaReleaseExecutable${currentOs.capitalize()}")
+
+    doLast {
+        val from = Paths.get("build/bin/$currentOs/lagunaReleaseExecutable/laguna.kexe")
+        val to = Paths.get("build/bin/executables/laguna")
+        Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING)
+    }
 }
