@@ -172,6 +172,7 @@ val release by tasks.registering {
     doLast {
         val from = Paths.get("build/bin/$currentOs/lagunaReleaseExecutable/laguna.kexe")
         val to = Paths.get("build/bin/executables/laguna")
+        to.parent.toFile().mkdirs()
         Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING)
     }
 }
