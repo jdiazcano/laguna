@@ -1,9 +1,9 @@
 package com.jdiazcano.laguna.git
 
 import cnames.structs.git_repository
-import com.jdiazcano.laguna.debug
 import com.jdiazcano.laguna.files.File
 import com.jdiazcano.laguna.misc.allocValuePointedTo
+import com.jdiazcano.laguna.misc.debug
 import kotlinx.cinterop.*
 import libgit2.*
 

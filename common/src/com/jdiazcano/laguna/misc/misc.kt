@@ -1,5 +1,7 @@
 package com.jdiazcano.laguna.misc
 
+import com.jdiazcano.laguna.laguna
+
 expect fun env(name: String): String?
 
 expect fun <T> runBlocking(block: suspend () -> T): T
@@ -16,4 +18,10 @@ enum class ExitCode(val code: Int) {
     GIT_ERROR(2),
     MISSING_VARIABLE_VALUE(3),
     ;
+}
+
+fun debug(message: String) {
+    if (laguna.verbose) {
+        println(message)
+    }
 }

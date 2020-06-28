@@ -1,6 +1,6 @@
 package com.jdiazcano.laguna.files
 
-import com.jdiazcano.laguna.debug
+import com.jdiazcano.laguna.misc.debug
 
 expect class File(path: String) {
     companion object {
