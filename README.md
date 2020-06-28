@@ -5,9 +5,9 @@ Multiplatform with support for Mac (Linux/JVM incoming)
 Features:
 
 1. Variable substitution
-1. Centralized repository (updated content!)
+1. A centralized repository (updated content!)
 1. Custom repositories/folders
-1. Soon: Custom commands before/after the creation of the folder
+1. Custom commands before/after the creation of the project
 
 ## Usage
 ```
@@ -52,14 +52,51 @@ Now anything inside the template folder (in the example above it would be `kotli
 you can create any file/folder that you want. The folder structure will be copied and the (text) files will be rendered
 accordingly.
 
+An example of a template structure would be:
+
+```
+random-project
+├── build.gradle.kts
+├── settings.gradle.kts
+├── src
+│   └── com
+│       └── example
+│           └── {{name|classname}}.kt
+└── tst
+```
+
+### Laguna file format
+This is the file containing some metadata related to the template, for example it can contain the commands to execute
+before or after the creation of the template (ie: running `gradle build` right after the creation to check that 
+everything was good or creating some folders)
+
+The file can be completely omitted and it will just do nothing
+
+Schema (Only fields annotated with `*` are required):
+```
+{
+    "commands": {
+        "before": [],
+        "after": []
+    }
+}
+``` 
+
 ### Template format
-There are two places where you can learn about templating:
+From `KorTe`'s readme: _It is a non-strict super set of twig / django / atpl.js template engines and can support liquid templating engine as well with frontmatter._
+
+It has variables, functions and control flow statements. A hello world example:
+
+#### Custom constructs in Laguna
+1. `classname`: It will translate a string to a JVM class name. For example: `my-project` will be translated to `MyProject`
+1. `functionname`: Will remove non desired characters like dashes from a function name.
+
+#### Further documentation
+There are two places where you can learn more about templating:
 
 1. Laguna uses [KorTe](https://github.com/korlibs/korte) as templating engine, its documentation is pretty good!
 1. Examples at the official [laguna templates repository](https://github.com/jdiazcano/laguna-templates)
 
 ## Build from source
 1. Checkout this project
-1. Run `./gradlew release` (Needs Java!)
-
-### Building troubleshoot
+1. Run `gradle release`
