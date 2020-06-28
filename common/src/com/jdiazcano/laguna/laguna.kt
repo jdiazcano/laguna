@@ -11,10 +11,13 @@ import com.jdiazcano.laguna.git.GitException
 import com.jdiazcano.laguna.git.GitRepository
 import com.jdiazcano.laguna.misc.*
 import com.soywiz.korte.Template
-import com.soywiz.korte.TemplateConfig
 import com.soywiz.korte.Templates
 
 private const val DEFAULT_REPOSITORY_FOLDER = "/tmp/laguna-templates"
+private const val CONFIG_FILE_NAME = ".laguna"
+private val nonCoreFilter = { file: File ->
+    !file.path.endsWith(CONFIG_FILE_NAME)
+}
 
 class Laguna: CliktCommand(printHelpOnEmptyArgs = true) {
     val repositoryPath: String by option("-r", "--repository", help = "Repository (or folder) where templates are located.").default(DEFAULT_REPOSITORY_FOLDER)
@@ -32,16 +35,24 @@ class Laguna: CliktCommand(printHelpOnEmptyArgs = true) {
         val repository = `initialize and clean repository`()
 
         val templateFolder = repository.resolve(templateName)
+        val jsonConfigFile = templateFolder.resolve(CONFIG_FILE_NAME)
+        val templateJsonConfiguration = if (jsonConfigFile.exists()) {
+            jsonConfigFile.readAsJson(LagunaTemplateConfiguration.serializer())
+        } else {
+            null
+        }
         val outputFolder = File(outputFolder).resolve(projectName).apply {
             if (exists()) {
                 exit(ExitCode.FOLDER_ALREADY_EXISTS, "Output folder already exists. Select a folder that does not exist.".red.reset)
             }
         }
-        val config = LagunaTemplateConfiguration()
+        val config = LagunaKorteConfiguration()
         val renderer = Templates(GitTemplateProvider(templateFolder), config = config)
+        templateJsonConfiguration.executeBefore()
         renderer.render(templateFolder, outputFolder)
+        templateJsonConfiguration.executeAfter()
 
-        exit(ExitCode.ALL_GOOD, "Template created!".grn.reset)
+        exit(ExitCode.ALL_GOOD, "Template created!".grn)
     }
 
     /**
@@ -50,7 +61,7 @@ class Laguna: CliktCommand(printHelpOnEmptyArgs = true) {
     private fun Templates.render(templateFolder: File, outputFolder: File) = runBlocking {
         val renderedTemplates = hashMapOf<File, Output>()
         debug("Rendering folder: ${templateFolder.absolutePath}")
-        templateFolder.forEachFileRecursive {
+        templateFolder.forEachFileRecursive(nonCoreFilter) {
             // The file is relative to the repository folder
             val relativeFile = it.path.replace(templateFolder.path, "")
             debug("Rendering file: $relativeFile")

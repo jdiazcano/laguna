@@ -21,6 +21,8 @@ inline fun <reified T : CPointed> NativePlacement.allocValuePointedTo(obj: () ->
     return pointer
 }
 
+actual fun system(command: String) = platform.posix.system(command)
+
 actual fun exit(exitCode: ExitCode, message: String?) {
     message?.let { println(it) }
     exitProcess(exitCode.code)

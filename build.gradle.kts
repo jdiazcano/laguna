@@ -1,6 +1,5 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 import java.nio.file.Files
-import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 
 plugins {
@@ -88,6 +87,7 @@ kotlin {
             dependencies {
                 implementation(kotlin("stdlib-common", "1.3.70"))
 
+                implementation(Libraries.jetbrains.serialization.common)
                 implementation(Libraries.jetbrains.kotlin.coroutinesCommon)
                 implementation(Libraries.cliktMultiplatform)
                 implementation(Libraries.korlibs.korte)
@@ -107,6 +107,7 @@ kotlin {
             dependsOn(commonMain)
             dependencies {
                 implementation(Libraries.jetbrains.kotlin.coroutinesNative)
+                implementation(Libraries.jetbrains.serialization.native)
             }
         }
 
@@ -170,8 +171,8 @@ val release by tasks.registering {
     dependsOn("linkLagunaReleaseExecutable${currentOs.capitalize()}")
 
     doLast {
-        val from = Paths.get("build/bin/$currentOs/lagunaReleaseExecutable/laguna.kexe")
-        val to = Paths.get("build/bin/executables/laguna")
+        val from = project.file("build/bin/$currentOs/lagunaReleaseExecutable/laguna.kexe").toPath()
+        val to = project.file("build/bin/executables/laguna").toPath()
         to.parent.toFile().mkdirs()
         Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING)
     }

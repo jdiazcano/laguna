@@ -15,6 +15,8 @@ actual fun pwd(): String = memScoped {
     return realpath.toKString()
 }
 
+actual fun system(command: String) = platform.posix.system(command)
+
 inline fun <reified T : CPointed> NativePlacement.allocValuePointedTo(obj: () -> CPointer<T>): CPointerVar<T> {
     val pointer = allocPointerTo<T>()
     pointer.value = obj()

@@ -41,12 +41,12 @@ suspend fun File.forEachDirectoryRecursive(block: suspend (File) -> Unit) {
     }
 }
 
-suspend fun <T> File.forEachFileRecursive(block: suspend (File) -> T) {
+suspend fun <T> File.forEachFileRecursive(filter: (File) -> Boolean = { true }, block: suspend (File) -> T) {
     debug("Foreach recursive: $absolutePath")
     if (isDirectory()) {
-        files().forEach {
+        files().filter(filter).forEach {
             debug("Executing function for: ${it.absolutePath}")
-            it.forEachFileRecursive(block)
+            it.forEachFileRecursive(filter, block)
         }
     } else {
         block(this)

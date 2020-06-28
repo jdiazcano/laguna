@@ -7,7 +7,7 @@ import com.jdiazcano.laguna.misc.reset
 import com.soywiz.korte.Filter
 import com.soywiz.korte.TemplateConfig
 
-class LagunaTemplateConfiguration: TemplateConfig() {
+class LagunaKorteConfiguration: TemplateConfig() {
     init {
         replaceVariablePocessor { name, previous ->
             val value = previous(name) ?: exit(ExitCode.MISSING_VARIABLE_VALUE, "Variable '${name.red.reset}' is missing.")

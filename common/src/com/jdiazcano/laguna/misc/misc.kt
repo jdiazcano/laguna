@@ -6,6 +6,8 @@ expect fun <T> runBlocking(block: suspend () -> T): T
 
 expect fun pwd(): String
 
+expect fun system(command: String): Int
+
 expect fun exit(exitCode: ExitCode, message: String? = null)
 
 enum class ExitCode(val code: Int) {
