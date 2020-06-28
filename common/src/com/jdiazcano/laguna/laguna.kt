@@ -6,9 +6,7 @@ import com.github.ajalt.clikt.parameters.arguments.multiple
 import com.github.ajalt.clikt.parameters.arguments.transformAll
 import com.github.ajalt.clikt.parameters.options.*
 import com.jdiazcano.laguna.files.*
-import com.jdiazcano.laguna.git.Git
 import com.jdiazcano.laguna.git.GitException
-import com.jdiazcano.laguna.git.GitRepository
 import com.jdiazcano.laguna.misc.*
 import com.soywiz.korte.Template
 import com.soywiz.korte.Templates
@@ -48,9 +46,9 @@ class Laguna: CliktCommand(printHelpOnEmptyArgs = true) {
         }
         val config = LagunaKorteConfiguration()
         val renderer = Templates(GitTemplateProvider(templateFolder), config = config)
-        templateJsonConfiguration.executeBefore()
+        templateJsonConfiguration.executeBefore(config, templateArguments)
         renderer.render(templateFolder, outputFolder)
-        templateJsonConfiguration.executeAfter()
+        templateJsonConfiguration.executeAfter(config, templateArguments)
 
         exit(ExitCode.ALL_GOOD, "Template created!".grn)
     }

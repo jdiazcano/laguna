@@ -1,7 +1,9 @@
 package com.jdiazcano.laguna
 
 import com.jdiazcano.laguna.files.File
+import com.jdiazcano.laguna.misc.runBlocking
 import com.jdiazcano.laguna.misc.system
+import com.soywiz.korte.Template
 import com.soywiz.korte.TemplateProvider
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.Serializable
@@ -30,5 +32,23 @@ fun <T> File.readAsJson(strategy: DeserializationStrategy<T>): T {
     return json.parse(strategy, read())
 }
 
-fun LagunaTemplateConfiguration?.executeBefore() = this?.commands?.before?.forEach { system(it) }
-fun LagunaTemplateConfiguration?.executeAfter() = this?.commands?.after?.forEach { system(it) }
+fun LagunaTemplateConfiguration?.executeBefore(
+        config: LagunaKorteConfiguration,
+        templateArguments: Map<String, String>
+) = executeRenderedCommands(this?.commands?.before, config, templateArguments)
+
+fun LagunaTemplateConfiguration?.executeAfter(
+        config: LagunaKorteConfiguration,
+        templateArguments: Map<String, String>
+) = executeRenderedCommands(this?.commands?.after, config, templateArguments)
+
+private fun executeRenderedCommands(
+        commands: List<String>?,
+        config: LagunaKorteConfiguration,
+        templateArguments: Map<String, String>
+) = runBlocking {
+    commands?.forEach {
+        val renderedCommand = Template(it, config)(templateArguments)
+        system(renderedCommand)
+    }
+}
