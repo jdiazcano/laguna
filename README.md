@@ -1,6 +1,6 @@
 ## Laguna
 Agnostic and pluggable project generator for all kind of projects with a centralized repository. 100% written in Kotlin
-Multiplatform with support for Mac (Linux/JVM incoming)
+Multiplatform with support for Mac and Linux (JVM is planned)
 
 Features:
 
@@ -86,6 +86,15 @@ Schema (Only fields annotated with `*` are required):
 From `KorTe`'s readme: _It is a non-strict super set of twig / django / atpl.js template engines and can support liquid templating engine as well with frontmatter._
 
 It has variables, functions and control flow statements. A hello world example:
+
+```kotlin
+@file:JvmName("{{name|classname}}")
+package com.example
+
+fun main(args: Array<String>) {
+    println("Hello world from {{name}}")
+}
+```
 
 #### Custom constructs in Laguna
 1. `classname`: It will translate a string to a JVM class name. For example: `my-project` will be translated to `MyProject`
