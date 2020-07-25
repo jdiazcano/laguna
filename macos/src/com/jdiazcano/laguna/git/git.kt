@@ -12,37 +12,37 @@ fun ask(prompt: String): String? {
     return readLine()
 }
 
+/**
+ * Will try (and in any case ask for username if not provided, will be always provied with ssh):
+ * 1. If SSH: Get credentials from the SSH agent
+ * 2. If Userpass: Will ask for password
+ * 3. If Username: Will just use the username
+ */
+private val credentialsCallback = staticCFunction { cred: CPointer<CPointerVar<git_credential>>?, url: CPointer<ByteVar>?, urlUsername: CPointer<ByteVar>?, types: UInt, payload: COpaquePointer? ->
+    val username = urlUsername?.toKString() ?: ask("Username: ")
+    val error = when {
+        types and GIT_CREDENTIAL_SSH_KEY != 0.toUInt() -> {
+            git_credential_ssh_key_from_agent(cred, username).throwGitErrorIfNeeded()
+        }
+        types and GIT_CREDENTIAL_USERPASS_PLAINTEXT != 0.toUInt() -> {
+            println("WARNING: Your password is still not protected (will echo to the terminal)")
+            val password = ask("Password: ")
+            git_credential_userpass_plaintext_new(cred, username, password)
+        }
+        types and GIT_CREDENTIAL_USERNAME != 0.toUInt() -> {
+            git_credential_username_new(cred, username)
+        }
+        else -> {
+            throw IllegalStateException("Cannot check current credentials allowed types: $types")
+        }
+    }
+
+    error
+}
+
 actual object Git {
     init {
         git_libgit2_init()
-    }
-
-    /**
-     * Will try (and in any case ask for username if not provided, will be always provied with ssh):
-     * 1. If SSH: Get credentials from the SSH agent
-     * 2. If Userpass: Will ask for password
-     * 3. If Username: Will just use the username
-     */
-    private val credentialsCallback = staticCFunction { cred: CPointer<CPointerVar<git_credential>>?, url: CPointer<ByteVar>?, urlUsername: CPointer<ByteVar>?, types: UInt, payload: COpaquePointer? ->
-        val username = urlUsername?.toKString() ?: ask("Username: ")
-        val error = when {
-            types and GIT_CREDENTIAL_SSH_KEY != 0.toUInt() -> {
-                git_credential_ssh_key_from_agent(cred, username).throwGitErrorIfNeeded()
-            }
-            types and GIT_CREDENTIAL_USERPASS_PLAINTEXT != 0.toUInt() -> {
-                println("WARNING: Your password is still not protected (will echo to the terminal)")
-                val password = ask("Password: ")
-                git_credential_userpass_plaintext_new(cred, username, password)
-            }
-            types and GIT_CREDENTIAL_USERNAME != 0.toUInt() -> {
-                git_credential_username_new(cred, username)
-            }
-            else -> {
-                throw IllegalStateException("Cannot check current credentials allowed types: $types")
-            }
-        }
-
-        error
     }
 
     actual fun clone(url: String, file: File): GitRepository {
@@ -116,7 +116,13 @@ actual class GitRepository actual constructor(private val file: File) {
         return memScoped {
             val remote = allocPointerTo<git_remote>()
             git_remote_lookup(remote.ptr, repository.value, "origin").throwGitErrorIfNeeded()
-            val exit = git_remote_fetch(remote.value, null, null, null).throwGitErrorIfNeeded()
+            val opts = cValue<git_fetch_options> {
+                version = GIT_FETCH_OPTIONS_VERSION
+                proxy_opts.version = GIT_PROXY_OPTIONS_VERSION.convert()
+                callbacks.version = GIT_REMOTE_CALLBACKS_VERSION.convert()
+                callbacks.credentials = credentialsCallback
+            }
+            val exit = git_remote_fetch(remote.value, null, opts, null).throwGitErrorIfNeeded()
             git_remote_free(remote.value)
             exit
         }
@@ -173,15 +179,6 @@ actual class GitRepository actual constructor(private val file: File) {
             payload.dispose()
         }
     }
-
-//    private fun sshCredentials() = memScoped {
-//        allocValuePointedTo {
-//            staticCFunction { cred: CPointer<git_cred>, url: String, username: String, types: Int, payload: COpaquePointer? ->
-//                val credential = allocPointerTo<git_credential>()
-//                git_cred_ssh_key_from_agent(credential.ptr, username)
-//            }
-//        }
-//    }
 }
 
 private fun Int.throwGitErrorIfNeeded(): Int {
