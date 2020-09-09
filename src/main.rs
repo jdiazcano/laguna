@@ -1,7 +1,9 @@
+mod git;
 mod ocean;
 
 use clap::{App, Arg, AppSettings};
 use crate::ocean::OceanArgs;
+use crate::git::Git;
 
 fn main() {
     let template_name = Arg::with_name("template_name")
@@ -45,15 +47,10 @@ fn main() {
         ])
         .get_matches();
 
-    println!("{:?}", matches);
-    println!("{}", matches.value_of("repository").unwrap());
-    println!("{}", matches.value_of("name").unwrap());
-    println!("{}", matches.occurrences_of("verbose"));
-    println!("{}", matches.is_present("clean"));
-    println!("{}", matches.value_of("template_name").unwrap());
-
     let arguments = OceanArgs::from(matches);
     println!("{:?}", arguments);
+
+    Git::prepare_repo(arguments);
 }
 
 fn validate_input_args(val: &str) -> Result<(), String> {

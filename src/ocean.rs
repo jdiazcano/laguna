@@ -1,5 +1,4 @@
-use clap::{ArgMatches, Values};
-use std::iter;
+use clap::{ArgMatches};
 
 struct Ocean;
 impl Ocean {
