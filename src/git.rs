@@ -1,22 +1,28 @@
-use git2::{Repository, ErrorCode, FetchOptions, RemoteCallbacks, Cred};
+use git2::{Repository, ErrorCode, FetchOptions, RemoteCallbacks, Cred, Reference};
 use crate::ocean::OceanArgs;
 use url::Url;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use git2::build::{CheckoutBuilder, RepoBuilder};
 use dialoguer::{Input, Password};
 
 pub struct Git;
 
 impl Git {
-    pub fn prepare_repo(arguments: OceanArgs) -> Result<(), ErrorCode> {
+    pub fn prepare_repo<'a>(arguments: &OceanArgs) -> Result<PathBuf, ErrorCode> {
         let repository = match Url::parse(&arguments.repository) {
-            Ok(url) => prepare_url(&arguments.repository),
-            Err(e) => prepare_path(&arguments.repository),
+            Ok(_url) => prepare_url(&arguments.repository),
+            Err(_e) => prepare_path(&arguments.repository),
         };
         let reference = match repository.head() {
             Ok(reference) => reference,
             Err(error) => return Err(error.code())
         };
+        Git::clean_and_update_repository(&repository, reference);
+        let x = repository.path().to_owned();
+        Ok(x)
+    }
+
+    fn clean_and_update_repository(repository: &Repository, reference: Reference) {
         let mut remote = repository.find_remote("origin").unwrap();
         let mut opts = Git::fetch_opts();
         remote.fetch(&["master"], Some(&mut opts), None);
@@ -27,8 +33,6 @@ impl Git {
         repository.checkout_tree(&treeish, Some(checkout_builder));
         repository.reference(reference.name().unwrap(), reference.target().unwrap(), true, "log").unwrap()
             .set_target(treeish.id(), "");
-
-        Ok(())
     }
 
     fn callback<'a>() -> RemoteCallbacks<'a> {
@@ -49,7 +53,7 @@ impl Git {
             } else if allowed_types.is_username() {
                 Cred::username(&username)
             } else {
-                panic!("Unknown credentials.")
+                panic!("Unknown type of credentials.")
             }
         });
 
@@ -66,7 +70,7 @@ impl Git {
     fn init(path: String) -> Repository {
         return match Repository::open(path) {
             Ok(repo) => repo,
-            Err(e) => panic!("failed to init: {}", e),
+            Err(e) => panic!("Failed to init repository: {}", e),
         };
     }
 }

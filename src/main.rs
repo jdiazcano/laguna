@@ -1,9 +1,13 @@
+mod templater;
 mod git;
 mod ocean;
+mod errorcode;
 
 use clap::{App, Arg, AppSettings};
 use crate::ocean::OceanArgs;
 use crate::git::Git;
+use crate::templater::Templater;
+use std::path::Path;
 
 fn main() {
     let template_name = Arg::with_name("template_name")
@@ -50,7 +54,17 @@ fn main() {
     let arguments = OceanArgs::from(matches);
     println!("{:?}", arguments);
 
-    Git::prepare_repo(arguments);
+    let repository_path = match Git::prepare_repo(&arguments) {
+        Ok(path) => path,
+        Err(error) => panic!("Random")
+    };
+
+    let template_path = repository_path.as_path().parent().unwrap().join(&arguments.template_name);
+
+    let templater = Templater {
+        path: template_path.as_path()
+    };
+    templater.render();
 }
 
 fn validate_input_args(val: &str) -> Result<(), String> {
