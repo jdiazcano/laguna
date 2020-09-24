@@ -15,7 +15,8 @@ pub struct OceanArgs {
     pub force_clean: bool,
     pub repository: String,
     pub no_clean: bool,
-    pub varargs: Vec<(String, String)>
+    pub varargs: Vec<(String, String)>,
+    pub output_folder: Option<String>,
 }
 
 impl From<ArgMatches> for OceanArgs {
@@ -27,6 +28,7 @@ impl From<ArgMatches> for OceanArgs {
             force_clean: matches.is_present("clean"),
             repository: matches.value_of("repository").unwrap().to_string(),
             no_clean: matches.is_present("no-clean"),
+            output_folder: matches.value_of("output-folder").map(|e| e.to_string()),
             varargs: matches.values_of("inputs").unwrap_or_default()
                 .map(|value| value.to_string())
                 .map(|value| value.split("=").map(|e| e.to_string()).collect::<Vec<_>>())

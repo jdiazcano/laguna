@@ -1,13 +1,14 @@
 mod templater;
 mod git;
 mod ocean;
-mod errorcode;
 
 use clap::{App, Arg, AppSettings};
 use crate::ocean::OceanArgs;
 use crate::git::Git;
 use crate::templater::Templater;
 use std::path::Path;
+use std::fs;
+use std::fs::File;
 
 fn main() {
     let template_name = Arg::with_name("template_name")
@@ -17,6 +18,9 @@ fn main() {
     let project_name = Arg::from("-n, --name=[PROJECT_NAME]")
         .about("Project name (and name of the created folder)")
         .required(true);
+
+    let output_folder = Arg::from("-o, --output-folder=[OUTPUT_FOLDER]")
+        .about("Output folder where the new project will be");
 
     let verbose = Arg::from("-v, --verbose")
         .multiple(true)
@@ -47,7 +51,8 @@ fn main() {
             verbose,
             no_clean,
             force_clean,
-            varargs
+            output_folder,
+            varargs,
         ])
         .get_matches();
 
@@ -56,15 +61,38 @@ fn main() {
 
     let repository_path = match Git::prepare_repo(&arguments) {
         Ok(path) => path,
-        Err(error) => panic!("Random")
+        Err(error) => panic!(error)
     };
 
     let template_path = repository_path.as_path().parent().unwrap().join(&arguments.template_name);
 
+    let mut parameters = arguments.varargs.clone();
+    parameters.insert(0, ("name".to_string(), arguments.project_name.clone()));
     let templater = Templater {
-        path: template_path.as_path()
+        path: template_path.as_path(),
+        parameters
     };
-    templater.render();
+    let rendered_files = match templater.render() {
+        Ok(files) => files,
+        Err(error) => panic!(error)
+    };
+
+    let output_folder = match &arguments.output_folder {
+        Some(folder) => Path::new(folder).join(&arguments.project_name),
+        None => Path::new(&arguments.project_name).to_path_buf()
+    };
+
+    if output_folder.exists() {
+        println!("Output folder {} already exists.", &output_folder.to_str().unwrap());
+    } else {
+        println!("Creating directory and writing all the files.");
+        fs::create_dir_all(output_folder.as_path());
+        for (key, value) in &rendered_files {
+            let output_file = output_folder.join(key);
+            print!("Writing file: {}", &output_file.to_str().unwrap());
+            fs::write(&output_file, value);
+        }
+    }
 }
 
 fn validate_input_args(val: &str) -> Result<(), String> {

@@ -101,7 +101,10 @@ fn prepare_url(url: &String) -> Repository {
 fn prepare_path(path: &String) -> Repository {
     return match Repository::open(path) {
         Ok(repo) => repo,
-        Err(e) => panic!("Could not open repository: {}", path)
+        Err(e) => {
+            eprintln!("{}", e);
+            panic!("Could not open repository: {}", path)
+        }
     }
 }
 

@@ -1,11 +1,13 @@
-use crate::errorcode::ErrorCode;
 use tera::{Tera, Context};
 use walkdir::{WalkDir, DirEntry};
 use std::fs::{create_dir, create_dir_all};
 use std::path::{Path, Display};
+use std::collections::HashMap;
+use std::iter::Map;
 
 pub struct Templater<'a> {
-    pub(crate) path: &'a Path
+    pub path: &'a Path,
+    pub parameters: Vec<(String, String)>,
 }
 
 fn dirs_filter(dir: &DirEntry) -> bool {
@@ -13,32 +15,44 @@ fn dirs_filter(dir: &DirEntry) -> bool {
 }
 
 impl Templater<'_> {
-    pub fn render(&self) -> Result<(), ErrorCode> {
+    pub fn render(&self) -> Result<HashMap<String, String>, String> {
         let str_path = self.path.to_str().unwrap();
         let glob = format!("{}/**/*", str_path);
         let mut tera = Tera::new(&glob).unwrap();
         let walker = WalkDir::new(self.path).into_iter();
 
-        let context = Context::new();
+        let mut context = Context::new();
+        for parameter in &self.parameters {
+            context.insert(&parameter.0, &parameter.1);
+        }
         let prefix = &format!("{}/", str_path);
+        let mut rendered_files = HashMap::new();
         for file in walker {
-
             match file {
                 Ok(file) => {
                     let template_file = file.path().to_str().unwrap().strip_prefix(prefix);
                     match template_file {
                         Some(str) => {
-                            println!("Template file: {}", str);
-                            let str = tera.render(str, &context);
-                            println!("{}", str.unwrap());
+                            match tera.render(str, &context) {
+                                Ok(rendered_text) => {
+                                    rendered_files.insert(str.to_string(), rendered_text)
+                                },
+                                Err(error) => {
+                                    eprintln!("{}", error);
+                                    return Err(String::from("Error in rendering."))
+                                }
+                            };
                         },
                         None => {}
                     }
                 },
-                Err(err) => return Err(ErrorCode::ErrorRendering)
+                Err(err) => {
+                    eprintln!("{}", err);
+                    return Err(String::from("Error opening the file."))
+                }
             }
         }
 
-        Ok(())
+        Ok(rendered_files)
     }
 }
