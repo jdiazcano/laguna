@@ -83,7 +83,7 @@ Schema (Only fields annotated with `*` are required):
 ``` 
 
 ### Template format
-From `KorTe`'s readme: _It is a non-strict super set of twig / django / atpl.js template engines and can support liquid templating engine as well with frontmatter._
+From `Tera`'s readme: _Tera is a template engine inspired by Jinja2 and the Django template language._
 
 It has variables, functions and control flow statements. A hello world example:
 
@@ -103,7 +103,7 @@ fun main(args: Array<String>) {
 #### Further documentation
 There are two places where you can learn more about templating:
 
-1. Laguna uses [KorTe](https://github.com/korlibs/korte) as templating engine, its documentation is pretty good!
+1. Laguna uses [Tera](https://github.com/Keats/tera) as templating engine, its documentation is pretty good!
 1. Examples at the official [laguna templates repository](https://github.com/jdiazcano/laguna-templates)
 
 ## Build from source

@@ -11,49 +11,11 @@ use std::fs;
 use std::fs::File;
 
 fn main() {
-    let template_name = Arg::with_name("template_name")
-        .required(true)
-        .about("Name of the template.");
-
-    let project_name = Arg::from("-n, --name=[PROJECT_NAME]")
-        .about("Project name (and name of the created folder)")
-        .required(true);
-
-    let output_folder = Arg::from("-o, --output-folder=[OUTPUT_FOLDER]")
-        .about("Output folder where the new project will be");
-
-    let verbose = Arg::from("-v, --verbose")
-        .multiple(true)
-        .default_value("0")
-        .about("Enable debug messages");
-
-    let force_clean = Arg::from("-c, --clean")
-        .about("Force clean up of repository.");
-
-    let repository = Arg::from("-r, --repository=[REPOSITORY]")
-        .about("Repository (or folder) where templates are located.")
-        .default_value("https://github.com/jdiazcano/laguna-templates.git");
-
-    let no_clean = Arg::from("-C, --no-clean")
-        .about("Git repository will not be updated or cleaned up.");
-
-    let varargs = Arg::with_name("inputs")
-        .last(true)
-        .validator(validate_input_args)
-        .multiple(true);
+    let cli_arguments = create_arguments();
 
     let matches = App::new("laguna")
         .setting(AppSettings::TrailingVarArg)
-        .args(&[
-            template_name,
-            repository,
-            project_name,
-            verbose,
-            no_clean,
-            force_clean,
-            output_folder,
-            varargs,
-        ])
+        .args(&cli_arguments)
         .get_matches();
 
     let arguments = OceanArgs::from(matches);
@@ -93,6 +55,50 @@ fn main() {
             fs::write(&output_file, value);
         }
     }
+}
+
+fn create_arguments<'a>() -> [Arg<'a>; 8] {
+    let template_name = Arg::with_name("template_name")
+        .required(true)
+        .about("Name of the template.");
+
+    let project_name = Arg::from("-n, --name=[PROJECT_NAME]")
+        .about("Project name (and name of the created folder)")
+        .required(true);
+
+    let output_folder = Arg::from("-o, --output-folder=[OUTPUT_FOLDER]")
+        .about("Output folder where the new project will be");
+
+    let verbose = Arg::from("-v, --verbose")
+        .multiple(true)
+        .default_value("0")
+        .about("Enable debug messages");
+
+    let force_clean = Arg::from("-c, --clean")
+        .about("Force clean up of repository.");
+
+    let repository = Arg::from("-r, --repository=[REPOSITORY]")
+        .about("Repository (or folder) where templates are located.")
+        .default_value("https://github.com/jdiazcano/laguna-templates.git");
+
+    let no_clean = Arg::from("-C, --no-clean")
+        .about("Git repository will not be updated or cleaned up.");
+
+    let varargs = Arg::with_name("inputs")
+        .last(true)
+        .validator(validate_input_args)
+        .multiple(true);
+
+    [
+        template_name,
+        repository,
+        project_name,
+        verbose,
+        no_clean,
+        force_clean,
+        output_folder,
+        varargs,
+    ]
 }
 
 fn validate_input_args(val: &str) -> Result<(), String> {
