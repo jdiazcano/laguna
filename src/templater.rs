@@ -5,6 +5,8 @@ use std::path::{Path, Display};
 use std::collections::HashMap;
 use std::iter::Map;
 
+use crate::filters::{register_all_filters};
+
 pub struct Templater<'a> {
     pub path: &'a Path,
     pub parameters: Vec<(String, String)>,
@@ -19,6 +21,7 @@ impl Templater<'_> {
         let str_path = self.path.to_str().unwrap();
         let glob = format!("{}/**/*", str_path);
         let mut tera = Tera::new(&glob).unwrap();
+        register_all_filters(&mut tera);
         let walker = WalkDir::new(self.path).into_iter();
 
         let mut context = Context::new();

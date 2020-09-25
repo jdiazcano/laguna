@@ -59,28 +59,11 @@ random-project
 ├── build.gradle.kts
 ├── settings.gradle.kts
 ├── src
-│   └── com
-│       └── example
-│           └── {{name|classname}}.kt
+│  └── com
+|     └── example
+│        └── {{name|classname}}.kt
 └── tst
 ```
-
-### Laguna file format
-This is the file containing some metadata related to the template, for example it can contain the commands to execute
-before or after the creation of the template (ie: running `gradle build` right after the creation to check that 
-everything was good or creating some folders)
-
-The file can be completely omitted and it will just do nothing
-
-Schema (Only fields annotated with `*` are required):
-```
-{
-    "commands": {
-        "before": [],
-        "after": []
-    }
-}
-``` 
 
 ### Template format
 From `Tera`'s readme: _Tera is a template engine inspired by Jinja2 and the Django template language._
@@ -88,7 +71,7 @@ From `Tera`'s readme: _Tera is a template engine inspired by Jinja2 and the Djan
 It has variables, functions and control flow statements. A hello world example:
 
 ```kotlin
-@file:JvmName("{{name|classname}}")
+@file:JvmName("{{name|camel_case}}")
 package com.example
 
 fun main(args: Array<String>) {
@@ -97,8 +80,9 @@ fun main(args: Array<String>) {
 ```
 
 #### Custom constructs in Laguna
-1. `classname`: It will translate a string to a JVM class name. For example: `my-project` will be translated to `MyProject`
-1. `functionname`: Will remove non desired characters like dashes from a function name.
+1. `snake_case`: Transforms a string to snake_case. For example: `my-project` will be translated to `my_project`
+1. `camel_case`: Transforms a string to CamelCase. For example: `my-project` will be translated to `MyProject`
+1. `mixed_case`: Transforms a string to mixedCase. For example: `my-project` will be translated to `myProject`
 
 #### Further documentation
 There are two places where you can learn more about templating:

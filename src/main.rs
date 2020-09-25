@@ -1,3 +1,4 @@
+mod filters;
 mod templater;
 mod git;
 mod ocean;
