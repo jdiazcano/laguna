@@ -7,9 +7,9 @@ pub fn register_all_filters(tera: &mut Tera) {
 }
 
 mod filters {
-    use tera::{Value, try_get_value, to_value, Error};
+    use heck::{CamelCase, MixedCase, SnakeCase};
     use std::collections::HashMap;
-    use heck::{CamelCase, SnakeCase, MixedCase};
+    use tera::{to_value, try_get_value, Error, Value};
 
     pub fn camel_case(value: &Value, _: &HashMap<String, Value>) -> Result<Value, Error> {
         let s = try_get_value!("camel_case", "value", String, value);
@@ -28,5 +28,4 @@ mod filters {
 
         Ok(to_value(&s.to_mixed_case()).unwrap())
     }
-
 }

@@ -1,9 +1,9 @@
-use git2::{Repository, ErrorCode, FetchOptions, RemoteCallbacks, Cred, Reference};
 use crate::ocean::OceanArgs;
-use url::Url;
-use std::path::{Path, PathBuf};
-use git2::build::{CheckoutBuilder, RepoBuilder};
 use dialoguer::{Input, Password};
+use git2::build::{CheckoutBuilder, RepoBuilder};
+use git2::{Cred, ErrorCode, FetchOptions, Reference, RemoteCallbacks, Repository};
+use std::path::{Path, PathBuf};
+use url::Url;
 
 pub struct Git;
 
@@ -15,7 +15,7 @@ impl Git {
         };
         let reference = match repository.head() {
             Ok(reference) => reference,
-            Err(error) => return Err(error.code())
+            Err(error) => return Err(error.code()),
         };
         Git::clean_and_update_repository(&repository, reference);
         let x = repository.path().to_owned();
@@ -31,7 +31,14 @@ impl Git {
         let mut checkout_builder = CheckoutBuilder::new();
         let checkout_builder = checkout_builder.force();
         repository.checkout_tree(&treeish, Some(checkout_builder));
-        repository.reference(reference.name().unwrap(), reference.target().unwrap(), true, "log").unwrap()
+        repository
+            .reference(
+                reference.name().unwrap(),
+                reference.target().unwrap(),
+                true,
+                "log",
+            )
+            .unwrap()
             .set_target(treeish.id(), "");
     }
 
@@ -40,9 +47,7 @@ impl Git {
         callbacks.credentials(|url, username_from_url, allowed_types| {
             let username: String = match username_from_url {
                 Some(user) => user.to_string(),
-                None => {
-                    Input::new().with_prompt("Username").interact().unwrap()
-                }
+                None => Input::new().with_prompt("Username").interact().unwrap(),
             };
 
             if allowed_types.is_user_pass_plaintext() {
@@ -77,7 +82,11 @@ impl Git {
 
 fn prepare_url(url: &String) -> Repository {
     let repository_name: String = match url.rfind('/') {
-        Some(position) => url.chars().skip(position + 1).take(url.len() - position - 1 - 4).collect(),
+        Some(position) => url
+            .chars()
+            .skip(position + 1)
+            .take(url.len() - position - 1 - 4)
+            .collect(),
         None => panic!("Repository name not found in '{}'", url),
     };
 
@@ -93,9 +102,12 @@ fn prepare_url(url: &String) -> Repository {
             .clone(url, path.as_ref())
         {
             Ok(repo) => repo,
-            Err(e) => panic!("Could not clone repository '{}' into '{}'", url, &path_string)
+            Err(e) => panic!(
+                "Could not clone repository '{}' into '{}'",
+                url, &path_string
+            ),
         }
-    }
+    };
 }
 
 fn prepare_path(path: &String) -> Repository {
@@ -105,6 +117,5 @@ fn prepare_path(path: &String) -> Repository {
             eprintln!("{}", e);
             panic!("Could not open repository: {}", path)
         }
-    }
+    };
 }
-

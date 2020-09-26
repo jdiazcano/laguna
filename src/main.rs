@@ -1,14 +1,14 @@
 mod filters;
-mod templater;
 mod git;
 mod ocean;
+mod templater;
 
-use clap::{App, Arg, AppSettings};
-use crate::ocean::OceanArgs;
 use crate::git::Git;
+use crate::ocean::OceanArgs;
 use crate::templater::Templater;
-use std::path::Path;
+use clap::{App, AppSettings, Arg};
 use std::fs;
+use std::path::Path;
 
 fn main() {
     let cli_arguments = create_arguments();
@@ -23,29 +23,36 @@ fn main() {
 
     let repository_path = match Git::prepare_repo(&arguments) {
         Ok(path) => path,
-        Err(error) => panic!(error)
+        Err(error) => panic!(error),
     };
 
-    let template_path = repository_path.as_path().parent().unwrap().join(&arguments.template_name);
+    let template_path = repository_path
+        .as_path()
+        .parent()
+        .unwrap()
+        .join(&arguments.template_name);
 
     let mut parameters = arguments.varargs.clone();
     parameters.insert(0, ("name".to_string(), arguments.project_name.clone()));
     let templater = Templater {
         path: template_path.as_path(),
-        parameters
+        parameters,
     };
     let rendered_files = match templater.render() {
         Ok(files) => files,
-        Err(error) => panic!(error)
+        Err(error) => panic!(error),
     };
 
     let output_folder = match &arguments.output_folder {
         Some(folder) => Path::new(folder).join(&arguments.project_name),
-        None => Path::new(&arguments.project_name).to_path_buf()
+        None => Path::new(&arguments.project_name).to_path_buf(),
     };
 
     if output_folder.exists() {
-        println!("Output folder {} already exists.", &output_folder.to_str().unwrap());
+        println!(
+            "Output folder {} already exists.",
+            &output_folder.to_str().unwrap()
+        );
     } else {
         println!("Creating directory and writing all the files.");
         fs::create_dir_all(output_folder.as_path());
@@ -74,15 +81,14 @@ fn create_arguments<'a>() -> [Arg<'a>; 8] {
         .default_value("0")
         .about("Enable debug messages");
 
-    let force_clean = Arg::from("-c, --clean")
-        .about("Force clean up of repository.");
+    let force_clean = Arg::from("-c, --clean").about("Force clean up of repository.");
 
     let repository = Arg::from("-r, --repository=[REPOSITORY]")
         .about("Repository (or folder) where templates are located.")
         .default_value("https://github.com/jdiazcano/laguna-templates.git");
 
-    let no_clean = Arg::from("-C, --no-clean")
-        .about("Git repository will not be updated or cleaned up.");
+    let no_clean =
+        Arg::from("-C, --no-clean").about("Git repository will not be updated or cleaned up.");
 
     let varargs = Arg::new("inputs")
         .last(true)
@@ -104,7 +110,10 @@ fn create_arguments<'a>() -> [Arg<'a>; 8] {
 fn validate_input_args(val: &str) -> Result<(), String> {
     println!("{}", val);
     if !val.starts_with("--") {
-        return Err(String::from(format!("Error with '{}', arguments must start with --", val)))
+        return Err(String::from(format!(
+            "Error with '{}', arguments must start with --",
+            val
+        )));
     }
-    return Ok(())
+    return Ok(());
 }

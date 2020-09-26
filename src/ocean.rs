@@ -1,10 +1,8 @@
-use clap::{ArgMatches};
+use clap::ArgMatches;
 
 struct Ocean;
 impl Ocean {
-    fn exec(&self, arguments: &OceanArgs) {
-
-    }
+    fn exec(&self, arguments: &OceanArgs) {}
 }
 
 #[derive(Debug)]
@@ -29,11 +27,18 @@ impl From<ArgMatches> for OceanArgs {
             repository: matches.value_of("repository").unwrap().to_string(),
             no_clean: matches.is_present("no-clean"),
             output_folder: matches.value_of("output-folder").map(|e| e.to_string()),
-            varargs: matches.values_of("inputs").unwrap_or_default()
+            varargs: matches
+                .values_of("inputs")
+                .unwrap_or_default()
                 .map(|value| value.to_string())
                 .map(|value| value.split("=").map(|e| e.to_string()).collect::<Vec<_>>())
-                .map(|args: Vec<String>| (args[0].strip_prefix("--").unwrap().to_string(), args[1].to_string()))
-                .collect::<Vec<_>>()
-        }
+                .map(|args: Vec<String>| {
+                    (
+                        args[0].strip_prefix("--").unwrap().to_string(),
+                        args[1].to_string(),
+                    )
+                })
+                .collect::<Vec<_>>(),
+        };
     }
 }
