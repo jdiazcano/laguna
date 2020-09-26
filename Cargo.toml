@@ -19,3 +19,4 @@ url = "2.*" # Parse url to know if local or remote repository
 dialoguer = "0.6.*" # Ask for password when cloning/updating a private repository
 heck = "0.3.*" # Add support for camel_case, snake_case... filters in tera
 walkdir = "2.*" # Walk through the directory (recursively) to apply the templates
+content_inspector = "0.2.*" # Inspect a buffer to know if a file is binary or not (in order to not apply a template)

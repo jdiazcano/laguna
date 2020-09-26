@@ -4,6 +4,10 @@ use tera::{Context, Tera};
 use walkdir::{DirEntry, WalkDir};
 
 use crate::filters::register_all_filters;
+use crate::renderer::{BinaryOutput, Output, TemplateOutput};
+use content_inspector::ContentType;
+use std::fs::File;
+use std::io::Read;
 
 pub struct Templater<'a> {
     pub path: &'a Path,
@@ -15,7 +19,7 @@ fn dirs_filter(dir: &DirEntry) -> bool {
 }
 
 impl Templater<'_> {
-    pub fn render(&self) -> Result<HashMap<String, String>, String> {
+    pub fn render(&self) -> Result<HashMap<String, Box<dyn Output>>, String> {
         let str_path = self.path.to_str().unwrap();
         let glob = format!("{}/**/*", str_path);
         let mut tera = Tera::new(&glob).unwrap();
@@ -31,18 +35,28 @@ impl Templater<'_> {
         for file in walker {
             match file {
                 Ok(file) => {
+                    let content_type = find_content_type(&file);
                     let template_file = file.path().to_str().unwrap().strip_prefix(prefix);
                     match template_file {
                         Some(str) => {
-                            match tera.render(str, &context) {
-                                Ok(rendered_text) => {
-                                    rendered_files.insert(str.to_string(), rendered_text)
+                            let output: Box<dyn Output> = match content_type {
+                                ContentType::BINARY => {
+                                    let mut opened_file = File::open(file.path()).unwrap();
+                                    let mut bytes: Vec<u8> = Vec::new();
+                                    opened_file.read_to_end(&mut bytes);
+                                    Box::new(BinaryOutput::new(bytes))
                                 }
-                                Err(error) => {
-                                    eprintln!("{}", error);
-                                    return Err(String::from("Error in rendering."));
-                                }
+                                _ => match tera.render(str, &context) {
+                                    Ok(rendered_text) => {
+                                        Box::new(TemplateOutput::new(rendered_text))
+                                    }
+                                    Err(error) => {
+                                        eprintln!("{}", error);
+                                        return Err(String::from("Error in rendering."));
+                                    }
+                                },
                             };
+                            rendered_files.insert(str.to_string(), output);
                         }
                         None => {}
                     }
@@ -56,4 +70,12 @@ impl Templater<'_> {
 
         Ok(rendered_files)
     }
+}
+
+fn find_content_type(file: &DirEntry) -> ContentType {
+    let opened_file = File::open(file.path()).unwrap();
+    let mut peek_content = String::new();
+    opened_file.take(1024).read_to_string(&mut peek_content);
+
+    content_inspector::inspect(peek_content.as_ref())
 }

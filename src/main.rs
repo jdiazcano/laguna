@@ -1,6 +1,7 @@
 mod filters;
 mod git;
 mod ocean;
+mod renderer;
 mod templater;
 
 use crate::git::Git;
@@ -58,8 +59,8 @@ fn main() {
         fs::create_dir_all(output_folder.as_path());
         for (key, value) in &rendered_files {
             let output_file = output_folder.join(key);
-            print!("Writing file: {}", &output_file.to_str().unwrap());
-            fs::write(&output_file, value);
+            println!("Writing file: {}", &output_file.to_str().unwrap());
+            value.render(output_file);
         }
     }
 }
