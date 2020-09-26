@@ -44,7 +44,7 @@ impl Git {
 
     fn callback<'a>() -> RemoteCallbacks<'a> {
         let mut callbacks = RemoteCallbacks::default();
-        callbacks.credentials(|url, username_from_url, allowed_types| {
+        callbacks.credentials(|_url, username_from_url, allowed_types| {
             let username: String = match username_from_url {
                 Some(user) => user.to_string(),
                 None => Input::new().with_prompt("Username").interact().unwrap(),
@@ -102,7 +102,7 @@ fn prepare_url(url: &String) -> Repository {
             .clone(url, path.as_ref())
         {
             Ok(repo) => repo,
-            Err(e) => panic!(
+            Err(_e) => panic!(
                 "Could not clone repository '{}' into '{}'",
                 url, &path_string
             ),

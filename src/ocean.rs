@@ -2,7 +2,7 @@ use clap::ArgMatches;
 
 struct Ocean;
 impl Ocean {
-    fn exec(&self, arguments: &OceanArgs) {}
+    fn exec(&self, _arguments: &OceanArgs) {}
 }
 
 #[derive(Debug)]
