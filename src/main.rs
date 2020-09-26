@@ -9,7 +9,6 @@ use crate::git::Git;
 use crate::templater::Templater;
 use std::path::Path;
 use std::fs;
-use std::fs::File;
 
 fn main() {
     let cli_arguments = create_arguments();
@@ -59,7 +58,7 @@ fn main() {
 }
 
 fn create_arguments<'a>() -> [Arg<'a>; 8] {
-    let template_name = Arg::with_name("template_name")
+    let template_name = Arg::new("template_name")
         .required(true)
         .about("Name of the template.");
 
@@ -85,7 +84,7 @@ fn create_arguments<'a>() -> [Arg<'a>; 8] {
     let no_clean = Arg::from("-C, --no-clean")
         .about("Git repository will not be updated or cleaned up.");
 
-    let varargs = Arg::with_name("inputs")
+    let varargs = Arg::new("inputs")
         .last(true)
         .validator(validate_input_args)
         .multiple(true);

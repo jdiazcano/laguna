@@ -1,9 +1,7 @@
 use tera::{Tera, Context};
 use walkdir::{WalkDir, DirEntry};
-use std::fs::{create_dir, create_dir_all};
-use std::path::{Path, Display};
+use std::path::{Path};
 use std::collections::HashMap;
-use std::iter::Map;
 
 use crate::filters::{register_all_filters};
 
