@@ -17,7 +17,10 @@ impl Git {
             Ok(reference) => reference,
             Err(error) => return Err(error.code()),
         };
-        Git::clean_and_update_repository(&repository, reference);
+        let clean = !arguments.no_clean || arguments.force_clean;
+        if clean {
+            Git::clean_and_update_repository(&repository, reference);
+        }
         let x = repository.path().to_owned();
         Ok(x)
     }

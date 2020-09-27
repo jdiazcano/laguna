@@ -6,12 +6,18 @@ mod templater;
 
 use crate::git::Git;
 use crate::ocean::OceanArgs;
-use crate::templater::Templater;
+use crate::templater::{Templater};
 use clap::{App, AppSettings, Arg};
 use std::fs;
 use std::path::Path;
 
+
 fn main() {
+    // let content_type = find_content_type(Path::new("/Users/javier/workspace/github/laguna-templates/kotlin-jvm/gradle/wrapper/gradle-wrapper.jar"));
+    // println!("{}", content_type);
+    //
+    // panic!("");
+
     let cli_arguments = create_arguments();
 
     let matches = App::new("laguna")
@@ -59,6 +65,7 @@ fn main() {
         fs::create_dir_all(output_folder.as_path());
         for (key, value) in &rendered_files {
             let output_file = output_folder.join(key);
+            fs::create_dir_all(output_file.parent().unwrap());
             println!("Writing file: {}", &output_file.to_str().unwrap());
             value.render(output_file);
         }
