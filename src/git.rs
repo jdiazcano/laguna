@@ -93,7 +93,7 @@ fn prepare_url(url: &String) -> Repository {
         None => panic!("Repository name not found in '{}'", url),
     };
 
-    let path = Path::new("/tmp/").join(repository_name);
+    let path = std::env::temp_dir().join(repository_name);
     let path_string = String::from(path.to_str().unwrap());
 
     return if path.exists() {
@@ -105,9 +105,9 @@ fn prepare_url(url: &String) -> Repository {
             .clone(url, path.as_ref())
         {
             Ok(repo) => repo,
-            Err(_e) => panic!(
-                "Could not clone repository '{}' into '{}'",
-                url, &path_string
+            Err(e) => panic!(
+                "Could not clone repository '{}' into '{}'. Error: {}",
+                url, &path_string, e
             ),
         }
     };
