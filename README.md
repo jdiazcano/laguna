@@ -31,6 +31,16 @@ rendered files with variable substitution.
 
 Example: `laguna kotlin-multiplatform --name newlaguna -- variable1=value1 variable2=value2`
 
+## Installing
+### Docker
+1. Install docker
+1. Create an alias for an easy usage: `alias laguna="docker run terkitos/laguna "$@""`
+
+### From source
+1. Clone the project
+1. cd into the project
+1. `cargo install --path .`
+
 ## Creating a template
 
 ### Create folder structure
