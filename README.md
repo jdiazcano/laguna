@@ -1,13 +1,11 @@
 ## Laguna
-Agnostic and pluggable project generator for all kind of projects with a centralized repository. 100% written in Kotlin
-Multiplatform with support for Mac and Linux (JVM is planned)
+Agnostic and pluggable project generator for all kind of projects with a centralized repository. 100% written in Rust
 
 Features:
 
 1. Variable substitution
 1. A centralized repository (updated content!)
-1. Custom repositories/folders
-1. Custom commands before/after the creation of the project
+1. Custom repositories/folders (also private)
 
 ## Usage
 ```
@@ -61,7 +59,7 @@ random-project
 ├── src
 │  └── com
 |     └── example
-│        └── {{name|classname}}.kt
+│        └── {{name|camel_case}}.kt
 └── tst
 ```
 
@@ -83,6 +81,7 @@ fun main(args: Array<String>) {
 1. `snake_case`: Transforms a string to snake_case. For example: `my-project` will be translated to `my_project`
 1. `camel_case`: Transforms a string to CamelCase. For example: `my-project` will be translated to `MyProject`
 1. `mixed_case`: Transforms a string to mixedCase. For example: `my-project` will be translated to `myProject`
+1. `kebab_case`: Transforms a string to mixedCase. For example: `My project` will be translated to `my-project`
 
 #### Further documentation
 There are two places where you can learn more about templating:
@@ -92,4 +91,4 @@ There are two places where you can learn more about templating:
 
 ## Build from source
 1. Checkout this project
-1. Run `gradle release`
+1. Run `cargo build`
