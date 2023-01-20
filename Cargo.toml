@@ -14,7 +14,7 @@ serde_json = "1.*"
 
 clap = "3.0.0-beta.2" # Cli parser
 tera = "1.*" # Tera templates
-git2 = "0.13.*" # Cloning, fetching and updating the actual repositories of templates
+git2 = "0.16.*" # Cloning, fetching and updating the actual repositories of templates
 url = "2.*" # Parse url to know if local or remote repository
 dialoguer = "0.6.*" # Ask for password when cloning/updating a private repository
 heck = "0.3.*" # Add support for camel_case, snake_case... filters in tera
